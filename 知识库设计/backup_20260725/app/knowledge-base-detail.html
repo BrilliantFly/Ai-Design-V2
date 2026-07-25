@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>知识库详情 - 技术文档</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background: #F8FAF9;
+      color: #1F2329;
+      max-width: 375px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 72px;
+    }
+
+    /* ===== Sticky Header ===== */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      padding: 0 8px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+    }
+    .header-left,
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1F2329;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .icon-btn:active { background: rgba(0, 0, 0, 0.04); }
+
+    /* ===== Cover Area ===== */
+    .cover {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(135deg, #25B864 0%, #1DA05A 40%, #147A43 100%);
+      position: relative;
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: linear-gradient(to bottom, transparent, #F8FAF9);
+    }
+
+    /* ===== KB Info Section ===== */
+    .kb-info {
+      padding: 16px;
+      background: #fff;
+      margin: 0 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      position: relative;
+      margin-top: -8px;
+    }
+    .kb-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1F2329;
+      margin-bottom: 4px;
+    }
+    .kb-desc {
+      font-size: 14px;
+      color: #646A73;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .kb-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #8F959E;
+    }
+    .kb-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ===== Section Card ===== */
+    .section {
+      margin: 12px 16px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 16px 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1F2329;
+    }
+    .section-header svg { flex-shrink: 0; }
+
+    /* ===== List Item ===== */
+    .list-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #F1F5F2;
+      cursor: pointer;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item:active { background: #F8FAF9; }
+    .item-icon {
+      width: 36px;
+      height: 36px;
+      background: #F1F5F2;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+    .item-body { flex: 1; min-width: 0; }
+    .item-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1F2329;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-sub {
+      font-size: 12px;
+      color: #8F959E;
+      margin-top: 2px;
+    }
+    .item-chevron {
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    /* ===== Directory Tree ===== */
+    .dir-item { border-bottom: 0.5px solid #F1F5F2; }
+    .dir-item:last-child { border-bottom: none; }
+    .dir-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px; cursor: pointer;
+    }
+    .dir-row:active { background: #F8FAF9; }
+    .dir-arrow {
+      flex-shrink: 0; transition: transform 0.2s;
+    }
+    .dir-expanded > .dir-row .dir-arrow { transform: rotate(0deg); }
+    .dir-item:not(.dir-expanded) > .dir-row .dir-arrow { transform: rotate(-90deg); }
+    .dir-name {
+      flex: 1; font-size: 14px; font-weight: 500; color: #1F2329;
+    }
+    .dir-count {
+      font-size: 12px; color: #8F959E; flex-shrink: 0;
+    }
+    .dir-children {
+      display: none; padding-left: 24px;
+    }
+    .dir-expanded > .dir-children { display: block; }
+    .dir-leaf .dir-row { padding: 10px 16px; }
+    .dir-leaf .dir-name { font-weight: 400; font-size: 13px; color: #646A73; }
+
+    /* ===== Floating Create Button ===== */
+    .fab {
+      position: fixed;
+      bottom: 92px;
+      right: calc(50% - 187px + 20px);
+      width: 48px;
+      height: 48px;
+      background: #25B864;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(37, 184, 100, 0.4);
+      cursor: pointer;
+      z-index: 90;
+    }
+    .fab:active { transform: scale(0.92); }
+    @media (max-width: 375px) {
+      .fab { right: 20px; }
+    }
+
+    /* ===== Bottom Tab Bar ===== */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 375px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding-bottom: 8px;
+      z-index: 100;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0 4px;
+      min-width: 56px;
+    }
+    .tab-label {
+      font-size: 10px;
+      color: #8F959E;
+      font-weight: 500;
+    }
+    .tab-item.active .tab-label { color: #25B864; }
+    .tab-center {
+      width: 40px;
+      height: 40px;
+      background: #25B864;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: -2px;
+      box-shadow: 0 2px 8px rgba(37, 184, 100, 0.35);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Sticky Header ===== -->
+  <header class="header">
+    <div class="header-left">
+      <button class="icon-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2329" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="header-title">技术文档</span>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F2329" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F2329" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Cover Area ===== -->
+  <div class="cover"></div>
+
+  <!-- ===== KB Info Section ===== -->
+  <div class="kb-info">
+    <div class="kb-name">技术文档</div>
+    <div class="kb-desc">团队技术知识库，收录前端、后端、数据库等技术领域的最佳实践与经验总结</div>
+    <div class="kb-meta">
+      <span class="kb-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        12 篇文档
+      </span>
+      <span class="kb-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        2025-03-18 创建
+      </span>
+    </div>
+  </div>
+
+  <!-- ===== Directory Section ===== -->
+  <div class="section">
+    <div class="section-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      目录
+    </div>
+    <!-- 前端开发 (展开) -->
+    <div class="dir-item dir-expanded">
+      <div class="dir-row" onclick="this.parentElement.classList.toggle('dir-expanded')">
+        <svg class="dir-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="dir-name">前端开发</span>
+        <span class="dir-count">5 篇</span>
+      </div>
+      <div class="dir-children">
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">Vue3组件封装指南</span>
+          </div>
+        </div>
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">TypeScript最佳实践</span>
+          </div>
+        </div>
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">CSS动画技巧</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 后端开发 (展开) -->
+    <div class="dir-item dir-expanded">
+      <div class="dir-row" onclick="this.parentElement.classList.toggle('dir-expanded')">
+        <svg class="dir-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="dir-name">后端开发</span>
+        <span class="dir-count">4 篇</span>
+      </div>
+      <div class="dir-children">
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">SpringBoot入门</span>
+          </div>
+        </div>
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">MyBatis-Plus实战</span>
+          </div>
+        </div>
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">微服务架构设计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 数据库 (收起) -->
+    <div class="dir-item">
+      <div class="dir-row" onclick="this.parentElement.classList.toggle('dir-expanded')">
+        <svg class="dir-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="dir-name">数据库</span>
+        <span class="dir-count">3 篇</span>
+      </div>
+      <div class="dir-children">
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">MySQL索引优化</span>
+          </div>
+        </div>
+        <div class="dir-item dir-leaf">
+          <div class="dir-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F959E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="dir-name">Redis缓存策略</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Document Section ===== -->
+  <div class="section">
+    <div class="section-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      文档
+    </div>
+    <div class="list-item">
+      <div class="item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="item-body"><div class="item-title">Vue3组件封装指南</div><div class="item-sub">张伟 · 3天前更新 · 阅读 326</div></div>
+    </div>
+    <div class="list-item">
+      <div class="item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="item-body"><div class="item-title">TypeScript最佳实践</div><div class="item-sub">李明 · 5天前更新 · 阅读 218</div></div>
+    </div>
+    <div class="list-item">
+      <div class="item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="item-body"><div class="item-title">前端性能优化</div><div class="item-sub">王芳 · 1周前更新 · 阅读 189</div></div>
+    </div>
+    <div class="list-item">
+      <div class="item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="item-body"><div class="item-title">CSS动画技巧</div><div class="item-sub">赵刚 · 2周前更新 · 阅读 157</div></div>
+    </div>
+  </div>
+
+  <!-- ===== Floating Create Button ===== -->
+  <button class="fab">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+  <!-- ===== Bottom Tab Bar ===== -->
+  <nav class="tab-bar">
+    <button class="tab-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="tab-label">工作台</span>
+    </button>
+    <button class="tab-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span class="tab-label">小记</span>
+    </button>
+    <button class="tab-item">
+      <div class="tab-center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </button>
+    <button class="tab-item active">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#25B864" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tab-label">知识库</span>
+    </button>
+    <button class="tab-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#646A73" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="tab-label">我的</span>
+    </button>
+  </nav>
+
+</body>
+</html>
