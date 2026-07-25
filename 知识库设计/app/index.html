@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识管理APP原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #1F2329;
+            margin-bottom: 40px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1F2329;
+            margin-bottom: 8px;
+        }
+        .card-desc {
+            font-size: 14px;
+            color: #646A73;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>知识管理APP原型</h1>
+        <div class="grid">
+            <a href="home.html" class="card">
+                <div class="card-icon">🏠</div>
+                <div class="card-title">首页（工作台）</div>
+                <div class="card-desc">知识库入口、最近小记、底部导航</div>
+            </a>
+            <a href="knowledge-base-list.html" class="card">
+                <div class="card-icon">📚</div>
+                <div class="card-title">知识库列表</div>
+                <div class="card-desc">所有知识库的列表展示</div>
+            </a>
+            <a href="knowledge-base-detail.html" class="card">
+                <div class="card-icon">📖</div>
+                <div class="card-title">知识库详情</div>
+                <div class="card-desc">知识库信息、目录结构、文档列表</div>
+            </a>
+            <a href="document-edit.html" class="card">
+                <div class="card-icon">📝</div>
+                <div class="card-title">文档编辑</div>
+                <div class="card-desc">富文本编辑器、格式工具栏</div>
+            </a>
+            <a href="memo.html" class="card">
+                <div class="card-icon">📋</div>
+                <div class="card-title">小记</div>
+                <div class="card-desc">快速记录、小记列表</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
