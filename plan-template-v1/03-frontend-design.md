@@ -477,6 +477,129 @@ onMounted
 
 ---
 
+## 3.9 执行状态改造（现有日程/打卡）
+
+### know-uniapp（移动端）改动
+
+**1. 创建表单注入 `execStatus=1`（执行中，App 立即可见）**
+
+改 4 处 `buildPayload()`，统一追加：
+
+```ts
+// HabitFormSheet.vue / habit/form.vue
+buildPayload() {
+  return {
+    ...this.form,
+    execStatus: 1, // ★ 移动端新建 → 执行中
+  };
+}
+
+// ScheduleFormSheet.vue / schedule 表单
+buildPayload() {
+  return {
+    ...this.form,
+    execStatus: 1, // ★ 移动端新建 → 执行中
+  };
+}
+```
+
+**2. 列表/日历/统计接口统一带 `execStatus=1`**
+
+`src/api/plan/habit.ts` 与 `schedule.ts` 的所有查询方法追加参数：
+
+```ts
+export const getHabitList = (params = {}) =>
+  http.get('/plan/habit/list', { ...params, execStatus: 1 });
+
+export const getEventList = (params = {}) =>
+  http.get('/plan/event/list', { ...params, execStatus: 1 });
+```
+
+> 备注：为了兼容模板创建链路，后端兜底 execStatus=1；但如果用户从模板批量创建的是草稿，App 端查询必须显式带 `execStatus=1` 才不显示。
+
+**3. 模板使用（`template/use.vue` 与计划内使用）**
+
+使用模板创建事项时透传来源：`execStatus: 1`（移动端使用模板 = 要执行）。
+
+### know-vue（管理端）改动
+
+**1. 创建表单注入 `execStatus=0`（非执行/草稿，App 不显示）**
+
+```ts
+// src/views/plan/habit/index.vue 新增表单提交
+payload: { ...formData, execStatus: 0 } // ★ 管理端新建 → 草稿
+
+// src/views/plan/schedule/index.vue 新增表单提交
+payload: { ...formData, execStatus: 0 } // ★ 管理端新建 → 草稿
+```
+
+**2. 列表展示全部，支持按执行状态筛选与切换**
+
+```html
+<!-- 列表页顶部筛选 -->
+<el-select v-model="queryParams.execStatus" placeholder="执行状态">
+  <el-option label="全部" :value="undefined" />
+  <el-option label="执行中" :value="1" />
+  <el-option label="非执行(草稿)" :value="0" />
+</el-select>
+
+<!-- 行内切换按钮 -->
+<el-switch
+  v-model="row.execStatus"
+  :active-value="1"
+  :inactive-value="0"
+  active-text="执行中"
+  inactive-text="草稿"
+  @change="toggleExecStatus(row)"
+/>
+```
+
+```ts
+// 切换接口
+const toggleExecStatus = async (row) => {
+  const url =
+    row.type === 'habit'
+      ? `/adminapi/plan/habit/${row.id}/exec-status`
+      : `/adminapi/plan/event/${row.id}/exec-status`;
+  await updateExecStatus(url, { execStatus: row.execStatus });
+};
+```
+
+**3. 模板使用（`view/plan/template/use`）**
+
+使用模板创建事项透传来源：`execStatus: 0`（管理端使用模板 = 先建草稿，审批后切换执行）。
+
+### 审批/联动说明（非强制）
+
+管理端可将"非执行 → 执行"视为上架/审批动作。切换后 App 可见。可后续扩展：
+- 切换为执行时可选发送通知给用户
+- 计划详情页展示该计划下的草稿数/执行数统计
+
+### 4. 计划内选择模板（useInPlan）★ 核心入口
+
+在**计划详情页**（know-uniapp 计划详情弹窗 / know-vue `views/plan/info/detail.vue`）新增"从模板添加日程/打卡"：
+
+```html
+<!-- know-uniapp 计划详情 -->
+<view class="action-bar">
+  <button @tap="showTemplatePicker">从模板添加打卡/日程</button>
+</view>
+
+<!-- picker 流程 -->
+1. 弹出模板列表（可搜索/按类型筛选） → POST /plan/template/list
+2. 选择模板 → 加载模板 detail（含 default_habit_ids/default_event_ids 解析）
+   → GET /plan/template/{id}
+3. 勾选要带过来的习惯/日程（默认全选，可取消）
+4. 确认 → POST /plan/template/use-in-plan
+   body: { planId, templateId, execStatus: 1,  // 移动端=1；管理端=0
+           selectedHabitIds: [...], selectedEventIds: [...] }
+5. 成功 → 刷新计划下的打卡/日程列表 → App 可见（execStatus=1）
+```
+
+> 管理端流程一致，仅 `execStatus: 0`，创建后为草稿，需在列表页切换为执行才会在 App 显示。
+
+---
+
 ## 3.10 组件拆分
 
 ```

@@ -30,7 +30,8 @@ com.know.knowboot.controller.plan/
 | POST | `` | 新增自定义模板 | PlanInfoTemplate body（含 parentId） |
 | PUT | `` | 修改模板 | PlanInfoTemplate body |
 | DELETE | `/{id}` | 删除模板（仅自定义模板，级联处理子模板） | id |
-| POST | `/{id}/use` | **从模板创建计划**（核心接口） | id, startDate, customizations(可选) |
+| POST | `/{id}/use` | **从模板创建计划**（核心接口） | id, startDate, execStatus, customizations(可选) |
+| POST | `/use-in-plan` | **计划内使用模板**（挂载习惯/日程到现有计划）★新增 | planId, templateId, execStatus, selectedHabitIds, selectedEventIds |
 | POST | `/from-plan/{planId}` | **从现有计划生成模板** | planId, templateName, description |
 
 ---
@@ -69,7 +70,7 @@ com.know.knowboot.controller.plan/
 
 | 方法 | 端点 | 说明 |
 |------|------|------|
-| GET | `/list` | 分页查询计划列表 |
+| GET | `/list` | 分页查询计划列表（支持 execStatus 过滤） |
 | GET | `/{id}` | 获取计划详情 |
 | POST | `` | 新建计划 |
 | PUT | `` | 修改计划 |
@@ -77,6 +78,40 @@ com.know.knowboot.controller.plan/
 | PUT | `/{id}/status` | 更新计划状态(0待开始→1进行中→2完成/3取消) |
 | PUT | `/{id}/progress` | 更新进度百分比 |
 | GET | `/by-template/{templateId}` | 查询某模板下所有计划 |
+
+## 2.5 执行状态切换端点
+
+### PlanHabitController 新增
+
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| PUT | `/api/plan/habit/{id}/exec-status` | 切换习惯执行状态，body: `{ "execStatus": 0 或 1 }` |
+
+### PlanScheduleEventController 新增
+
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| PUT | `/api/plan/event/{id}/exec-status` | 切换日程执行状态，body: `{ "execStatus": 0 或 1 }` |
+
+### 切换逻辑说明
+
+```java
+// 管理端（know-vue）审批流程：
+//   草稿(exec_status=0) ──切换──► 执行中(exec_status=1) ──切换──► 草稿(exec_status=0)
+//   切换接口仅校验记录归属，不做其他业务干预（打卡记录/完成状态不受影响）
+
+// 调用方：
+//   - know-vue 管理端：列表页可切换按钮
+//   - know-uniapp：无此入口（移动端只创建执行中事项，不管理草稿）
+```
+
+### 列表查询 execStatus 过滤规则
+
+| 客户端 | 过滤行为 |
+|--------|----------|
+| know-uniapp | 所有列表/日历/统计接口自动带 `execStatus=1`，只看到执行中事项 |
+| know-vue | 不带过滤（默认），可手动传 `execStatus` 参数筛选草稿/执行中 |
+| 后端口子 | 参数缺省时默认不过滤（管理端视角）；App 端由客户端显式传参 |
 
 ---
 
@@ -327,6 +362,9 @@ private Long templateId;
 
 @ApiModelProperty("创建自习惯模板ID")
 private Long habitTemplateId;
+
+@ApiModelProperty("执行状态(0:非执行/草稿 1:执行中)")
+private Integer execStatus;
 ```
 
 ### 变更：PlanScheduleEvent.java 新增字段
@@ -337,6 +375,28 @@ private Long templateId;
 
 @ApiModelProperty("创建自日程模板ID")
 private Long eventTemplateId;
+
+@ApiModelProperty("执行状态(0:非执行/草稿 1:执行中)")
+private Integer execStatus;
+```
+
+### 执行状态创建默认值规则
+
+```java
+// PlanHabitServiceImpl.add() 与 PlanScheduleEventServiceImpl.add()
+// 统一逻辑：客户端显式传递 execStatus，服务端兜底默认 1（执行中）
+
+public PlanHabit add(PlanHabit habit) {
+    if (habit.getExecStatus() == null) {
+        habit.setExecStatus(1); // 兜底：执行中（保持兼容）
+    }
+    ...
+}
+
+// 客户端职责：
+//   know-uniapp 创建 → 请求体携带 execStatus=1（执行中，App 立即可见）
+//   know-vue 创建     → 请求体携带 execStatus=0（非执行/草稿，App 不显示）
+//   useTemplate 创建  → 透传请求体的 execStatus
 ```
 
 ---
@@ -356,6 +416,63 @@ com.know.knowboot.service.plan/
       └── PlanInfoServiceImpl.java            (新增/启用)
 ```
 
+### DTO 定义（新增执行状态相关）
+
+```java
+@Data
+@ApiModel("使用模板创建计划请求")
+public class UseTemplateRequest {
+    @ApiModelProperty("计划名称")
+    private String planName;
+
+    @ApiModelProperty("开始日期时间戳")
+    private Long startDate;
+
+    @ApiModelProperty("执行状态(0:非执行/草稿 1:执行中)，缺省=1")
+    private Integer execStatus;
+
+    @ApiModelProperty("自定义修改（勾选/改名/改时间线）")
+    private Customizations customizations;
+
+    @Data
+    public static class Customizations {
+        private List<Integer> skipSubPlans;        // 跳过的子计划下标
+        private Map<String, Object> habitOverrides; // 习惯字段覆盖
+        private Map<String, Object> eventOverrides; // 日程字段覆盖
+    }
+}
+
+@Data
+@ApiModel("计划内使用模板请求")
+public class UseInPlanRequest {
+    @ApiModelProperty("目标计划ID（必填）")
+    private Long planId;
+
+    @ApiModelProperty("计划模板ID（必填）")
+    private Long templateId;
+
+    @ApiModelProperty("执行状态(0:非执行/草稿 1:执行中)，缺省=1")
+    private Integer execStatus;
+
+    @ApiModelProperty("勾选的习惯模板ID（空=全部）")
+    private List<Long> selectedHabitIds;
+
+    @ApiModelProperty("勾选的日程模板ID（空=全部）")
+    private List<Long> selectedEventIds;
+
+    @ApiModelProperty("自定义修改")
+    private UseTemplateRequest.Customizations customizations;
+}
+
+@Data
+@ApiModel("计划内使用模板结果")
+public class UseInPlanResult {
+    private Long planId;
+    private int habitCount;
+    private int eventCount;
+}
+```
+
 ### PlanInfoTemplateServiceImpl 关键方法
 
 ```java
@@ -371,6 +488,12 @@ public interface IPlanInfoTemplateService {
 
     /** 从模板创建计划（含递归子计划） — 核心方法 */
     UseTemplateResult useTemplate(Long templateId, Long userId, UseTemplateRequest request);
+
+    /** 计划内使用模板：将模板的习惯/日程挂载到现有计划（不创建新计划节点）★ 新增 */
+    UseInPlanResult useInPlan(Long planId, Long templateId, Long userId, UseInPlanRequest request);
+
+    /** 切换事项执行状态 */
+    void updateExecStatus(Long id, Integer execStatus, Long userId);
 
     /** 从现有计划生成模板（递归提取子计划树） */
     Long generateFromPlan(Long planId, String templateName, String description, Integer visibility, Long userId);

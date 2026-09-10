@@ -181,18 +181,21 @@ public UseTemplateResult useTemplate(Long templateId, Long userId, UseTemplateRe
 
     int[] counters = {0, 0, 0}; // [plans, habits, events]
 
+    // ★ 统一执行状态：来自请求（移动端 useTemplate → execStatus=1；管理端 → execStatus=0）
+    Integer execStatus = (req.getExecStatus() != null) ? req.getExecStatus() : 1;
+
     // 3. 解析并创建根级习惯（合并模板引用 + 内联定义）
     List<Map> habitDefs = resolveHabitDefs(tpl);
-    counters[1] += createHabitsFromDefs(habitDefs, rootPlan.getId(), userId, templateId, req.getStartDate(), req.getCustomizations(), "root");
+    counters[1] += createHabitsFromDefs(habitDefs, rootPlan.getId(), userId, templateId, req.getStartDate(), req.getCustomizations(), "root", execStatus);
 
     // 4. 解析并创建根级日程（合并模板引用 + 内联定义）
     List<Map> eventDefs = resolveEventDefs(tpl);
-    counters[2] += createEventsFromDefs(eventDefs, rootPlan.getId(), userId, templateId, req.getCustomizations(), "root");
+    counters[2] += createEventsFromDefs(eventDefs, rootPlan.getId(), userId, templateId, req.getCustomizations(), "root", execStatus);
 
     // 5. 递归创建子计划树 ★
     if (tpl.getDefaultSubPlans() != null) {
         List<Map> subPlanDefs = JSON.parseArray(tpl.getDefaultSubPlans(), Map.class);
-        counters[0] += createSubPlans(subPlanDefs, rootPlan.getId(), userId, req.getStartDate(), templateId, req.getCustomizations());
+        counters[0] += createSubPlans(subPlanDefs, rootPlan.getId(), userId, req.getStartDate(), templateId, req.getCustomizations(), execStatus);
     }
 
     // 6. 更新使用次数
@@ -208,7 +211,8 @@ public UseTemplateResult useTemplate(Long templateId, Long userId, UseTemplateRe
  * @return 创建的计划数量
  */
 private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
-                           long parentStartMs, Long templateId, UseTemplateRequest.Customizations customs) {
+                           long parentStartMs, Long templateId, UseTemplateRequest.Customizations customs,
+                           Integer execStatus) {
     int count = 0;
     long currentStartMs = parentStartMs; // 同级子计划按时间线顺序排列
 
@@ -254,7 +258,7 @@ private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
             subHabitDefs.addAll((List<Map>) def.get("habits"));
         }
         if (!subHabitDefs.isEmpty()) {
-            count += createHabitsFromDefs(subHabitDefs, subPlan.getId(), userId, templateId, currentStartMs, customs, "sub_" + i);
+            count += createHabitsFromDefs(subHabitDefs, subPlan.getId(), userId, templateId, currentStartMs, customs, "sub_" + i, execStatus);
         }
 
         // 创建该子计划的日程（合并模板引用 + 内联定义）
@@ -266,13 +270,13 @@ private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
             subEventDefs.addAll((List<Map>) def.get("events"));
         }
         if (!subEventDefs.isEmpty()) {
-            count += createEventsFromDefs(subEventDefs, subPlan.getId(), userId, templateId, customs, "sub_" + i);
+            count += createEventsFromDefs(subEventDefs, subPlan.getId(), userId, templateId, customs, "sub_" + i, execStatus);
         }
 
         // 递归创建下一层子计划
         if (def.get("sub_plans") != null && !((List) def.get("sub_plans")).isEmpty()) {
             List<Map> deeperPlans = (List<Map>) def.get("sub_plans");
-            count += createSubPlans(deeperPlans, subPlan.getId(), userId, currentStartMs, templateId, customs);
+            count += createSubPlans(deeperPlans, subPlan.getId(), userId, currentStartMs, templateId, customs, execStatus);
         }
 
         // 推进时间线：下一个兄弟子计划从当前子计划结束后开始
@@ -288,7 +292,8 @@ private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
  */
 private int createHabitsFromDefs(List<Map> defs, Long planId, Long userId,
                                   Long templateId, long startDateMs,
-                                  UseTemplateRequest.Customizations customs, String scope) {
+                                  UseTemplateRequest.Customizations customs, String scope,
+                                  Integer execStatus) {
     if (defs == null || defs.isEmpty()) return 0;
     int count = 0;
     for (int i = 0; i < defs.size(); i++) {
@@ -315,6 +320,7 @@ private int createHabitsFromDefs(List<Map> defs, Long planId, Long userId,
         habit.setCurrentDays(0);
         habit.setTotalDays(0);
         habit.setStatus(0);
+        habit.setExecStatus(execStatus != null ? execStatus : 1); // ★ 执行状态透传
         habit.setPlanId(planId);
         habit.setTemplateId(templateId);
         habit.setHabitTemplateId(def.get("template_id") != null ? ((Number) def.get("template_id")).longValue() : null);
@@ -331,7 +337,8 @@ private int createHabitsFromDefs(List<Map> defs, Long planId, Long userId,
  * 从定义列表创建日程（合并模板引用 + 内联定义）
  */
 private int createEventsFromDefs(List<Map> defs, Long planId, Long userId,
-                                  Long templateId, UseTemplateRequest.Customizations customs, String scope) {
+                                  Long templateId, UseTemplateRequest.Customizations customs, String scope,
+                                  Integer execStatus) {
     if (defs == null || defs.isEmpty()) return 0;
     int count = 0;
     for (int i = 0; i < defs.size(); i++) {
@@ -355,6 +362,7 @@ private int createEventsFromDefs(List<Map> defs, Long planId, Long userId,
         event.setCreateBy(userId);
         event.setCreateTime(System.currentTimeMillis());
         event.setStatus(0);
+        event.setExecStatus(execStatus != null ? execStatus : 1); // ★ 执行状态透传
         eventMapper.insert(event);
         count++;
     }
@@ -572,7 +580,92 @@ private List<Map> extractPlanTree(Long parentId) {
 
 ---
 
-## 4.3 数据一致性保证
+## 4.3 计划内使用模板（useInPlan）★ 新场景
+
+> 需求：**计划里面可以选择模板，并创建相关日程、打卡**。区别于 `useTemplate`（创建整棵计划树），`useInPlan` 把模板的习惯/日程**挂载到现有计划下**。
+
+### 场景
+
+- 用户进入某个**已有计划**的详情页
+- 点击"从模板添加日程/打卡"
+- 选择计划模板 → 弹出模板中的习惯/日程清单（勾选）
+- 确认后，被勾选的事项以该计划为 `plan_id` 创建
+
+### 请求/响应
+
+```http
+POST /api/plan/template/use-in-plan
+Content-Type: application/json
+
+{
+  "planId": 1001,              // 目标计划（必填，须属于当前用户）
+  "templateId": 8,             // 计划模板（必填）
+  "execStatus": 1,             // ★ 透传创建端默认值（uniapp=1 / vue=0）
+  "selectedHabitIds": [1, 2],  // 勾选的习惯模板ID（空=全部）
+  "selectedEventIds": [1, 3],  // 勾选的日程模板ID（空=全部）
+  "customizations": null       // 可选自定义
+}
+
+// 响应
+{
+  "planId": 1001,
+  "habitCount": 2,
+  "eventCount": 3
+}
+```
+
+### 核心逻辑
+
+```java
+@Transactional
+public UseInPlanResult useInPlan(Long planId, Long templateId, Long userId, UseInPlanRequest req) {
+    // 1. 校验计划归属
+    PlanInfo plan = planInfoMapper.selectById(planId);
+    if (plan == null || !plan.getCreateBy().equals(userId)) throw new BizException("计划不存在或无权操作");
+    if (plan.getDelFlag() != 0) throw new BizException("计划已删除");
+
+    // 2. 查询模板
+    PlanInfoTemplate tpl = templateMapper.selectById(templateId);
+    if (tpl == null || tpl.getDelFlag() != 0) throw new BizException("模板不存在");
+
+    // 3. 解析习惯/日程定义（复用 resolveHabitDefs / resolveEventDefs）
+    List<Map> habitDefs = filterSelected(resolveHabitDefs(tpl), req.getSelectedHabitIds());
+    List<Map> eventDefs = filterSelected(resolveEventDefs(tpl), req.getSelectedEventIds());
+
+    // 4. 执行状态统一取请求值
+    Integer execStatus = (req.getExecStatus() != null) ? req.getExecStatus() : 1;
+
+    // 5. 创建（直接挂到现有计划，不创建新计划节点）
+    int habitCount = createHabitsFromDefs(habitDefs, planId, userId, templateId,
+                                          plan.getPlanStartTime(), req.getCustomizations(), "in-plan", execStatus);
+    int eventCount = createEventsFromDefs(eventDefs, planId, userId, templateId,
+                                          req.getCustomizations(), "in-plan", execStatus);
+
+    // 6. 更新使用次数
+    tpl.setUseCount(tpl.getUseCount() + 1);
+    templateMapper.updateById(tpl);
+
+    return new UseInPlanResult(planId, habitCount, eventCount);
+}
+```
+
+> 注：`useInPlan` 只实例化习惯/日程，**不创建子计划层级**（子计划已存在于当前计划树中）。若期望把子计划也作为模板补齐，可后续扩展 `useInPlanTree`。
+
+### 前端入口
+
+```
+know-vue（管理端）：
+  计划详情页 /views/plan/info/detail.vue → 新增"从模板添加"按钮
+  → 弹出模板选择弹窗 → 勾选习惯/日程 → 提交 execStatus=0（草稿）
+
+know-uniapp（移动端）：
+  计划详情弹窗 → "使用模板添加打卡/日程"
+  → 提交 execStatus=1（执行中）
+```
+
+---
+
+## 4.4 数据一致性保证
 
 | 场景 | 处理方式 |
 |------|----------|
@@ -587,10 +680,15 @@ private List<Map> extractPlanTree(Long parentId) {
 | 子计划时间线冲突 | 同级子计划按 `duration_days` 顺序排列，自动计算 startDate/endDate |
 | 跳过子计划后时间线断裂 | 跳过的子计划不占时间，后续兄弟子计划向前填充 |
 | 习惯/日程模板 visibility=0 被他人使用 | 仅创建者可用（`create_by = userId` 校验） |
+| useInPlan 计划校验失败 | 校验 plan 归属 + `del_flag=0`，失败不创建任何数据 |
+| exec_status 参数缺失 | 后端兜底 `1`（执行中），兼容旧客户端 |
+| App 端查询是否连带草稿 | App 端所有列表接口显式带 `execStatus=1`；管理端切换 exec_status 后可立即在 App 显示/消失 |
+| 重复使用模板添加 | 允许重复（每次都是独立新事项）；去重由用户勾选控制，不做幂等 |
+| 模板切换执行状态 | 仅切换 `exec_status`，不动 `status`、打卡记录、完成进度，保证正交 |
 
 ---
 
-## 4.4 定时任务（可选 V2）
+## 4.5 定时任务（可选 V2）
 
 ```java
 // 模板推荐任务：每周更新热门模板排行
@@ -603,7 +701,7 @@ public void refreshTemplateRank() {
 
 ---
 
-## 4.5 统计查询
+## 4.6 统计查询
 
 ### 模板使用统计
 
@@ -636,7 +734,7 @@ SELECT * FROM plan_tree ORDER BY plan_start_time, depth;
 
 ---
 
-## 4.6 未来扩展点
+## 4.7 未来扩展点
 
 | 扩展方向 | V2 方案 |
 |----------|---------|

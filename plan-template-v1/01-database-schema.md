@@ -345,7 +345,8 @@ ALTER TABLE plan_info
 ```sql
 ALTER TABLE plan_habit
   ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自计划模板ID' AFTER plan_id,
-  ADD COLUMN habit_template_id BIGINT DEFAULT NULL COMMENT '创建自习惯模板ID' AFTER template_id;
+  ADD COLUMN habit_template_id BIGINT DEFAULT NULL COMMENT '创建自习惯模板ID' AFTER template_id,
+  ADD COLUMN exec_status TINYINT DEFAULT 1 COMMENT '执行状态(0:非执行/草稿 1:执行中)' AFTER status;
 ```
 
 ### plan_schedule_event 新增字段
@@ -353,8 +354,33 @@ ALTER TABLE plan_habit
 ```sql
 ALTER TABLE plan_schedule_event
   ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自计划模板ID' AFTER plan_id,
-  ADD COLUMN event_template_id BIGINT DEFAULT NULL COMMENT '创建自日程模板ID' AFTER template_id;
+  ADD COLUMN event_template_id BIGINT DEFAULT NULL COMMENT '创建自日程模板ID' AFTER template_id,
+  ADD COLUMN exec_status TINYINT DEFAULT 1 COMMENT '执行状态(0:非执行/草稿 1:执行中)' AFTER status;
 ```
+
+### 存量数据迁移
+
+```sql
+-- 现有数据全部视为"执行中"（它们当前都在 App 中显示）
+UPDATE plan_habit SET exec_status = 1 WHERE exec_status IS NULL;
+UPDATE plan_schedule_event SET exec_status = 1 WHERE exec_status IS NULL;
+```
+
+### exec_status 与 status 的区别（重要）
+
+| 字段 | 语义 | 取值 | 谁控制 |
+|------|------|------|--------|
+| `status` | **完成状态**（该事项做完了吗） | 习惯: 0进行中/1已完成/2已放弃；日程: 0未完成/1已完成 | 打卡/完成操作 |
+| `exec_status` | **执行状态**（该事项是否生效/在App展示） | 0:非执行(草稿) / 1:执行中 | 创建端默认 + 管理端切换 |
+
+- **正交关系**：一个事项可以"执行中但未完成"、"非执行"、"非执行但已完成"等组合
+- **App 展示规则**：know-uniapp 只展示 `exec_status=1`（执行中）的事项
+- **创建默认值规则**：
+  | 创建来源 | 默认 exec_status | 说明 |
+  |----------|-----------------|------|
+  | know-uniapp（移动端） | `1`（执行中） | 用户自己创建就是要执行的 |
+  | know-vue（管理端） | `0`（非执行/草稿） | 管理端先建草稿，审核后切换为执行 |
+  | 计划内使用模板创建 | 跟随创建端默认值 | 模板的 useTemplate 接口透传 `exec_status` |
 
 ### plan_info 确认启用字段
 
@@ -386,9 +412,11 @@ CREATE INDEX idx_event_template_sort ON plan_schedule_event_template(sort DESC, 
 CREATE INDEX idx_habit_plan_id ON plan_habit(plan_id);
 CREATE INDEX idx_habit_plan_template_id ON plan_habit(template_id);
 CREATE INDEX idx_habit_habit_template_id ON plan_habit(habit_template_id);
+CREATE INDEX idx_habit_exec_status ON plan_habit(exec_status, del_flag);
 CREATE INDEX idx_event_plan_id ON plan_schedule_event(plan_id);
 CREATE INDEX idx_event_plan_template_id ON plan_schedule_event(template_id);
 CREATE INDEX idx_event_event_template_id ON plan_schedule_event(event_template_id);
+CREATE INDEX idx_event_exec_status ON plan_schedule_event(exec_status, del_flag);
 CREATE INDEX idx_plan_parent_id ON plan_info(parent_id);
 CREATE INDEX idx_plan_template_id ON plan_info(template_id);
 ```
@@ -472,9 +500,29 @@ plan_info_template
 ```
 
 每个计划节点可独立挂载：
-- **习惯**（`plan_habit.plan_id`）
-- **日程**（`plan_schedule_event.plan_id`）
+- **习惯**（`plan_habit.plan_id`，含 `exec_status` 执行状态）
+- **日程**（`plan_schedule_event.plan_id`，含 `exec_status` 执行状态）
 - **子计划**（`plan_info.parent_id`）
+
+### 执行状态展示规则
+
+```
+            know-vue（管理端）          know-uniapp（移动端）
+              │ 显示全部                    │ 仅显示 exec_status=1
+              │ (exec_status 0 和 1)        │ (执行中的事项)
+              ▼                             ▼
+        ┌─────────────┐              ┌─────────────┐
+        │ 事项列表     │              │ 打卡/日程   │
+        │ 0:非执行 ●   │              │ 执行中 ✓    │
+        │ 1:执行中 ●  │────切换──────►│ (非执行不显示)│
+        └─────────────┘              └─────────────┘
+              ▲
+              │ 新建默认 exec_status=0
+              │
+        vue端 创建 → 草稿 → 管理端切换为执行 → App 可见
+
+        uniapp 创建 → 默认 exec_status=1 → App 立即可见
+```
 
 ### 模板引用方式说明
 
