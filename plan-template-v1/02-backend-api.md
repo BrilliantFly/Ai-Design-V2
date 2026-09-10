@@ -4,12 +4,14 @@
 
 ```
 com.know.knowboot.controller.plan/
-  ├── PlanInfoController.java          (已有，需启用)
-  ├── PlanInfoTemplateController.java  (新增)
-  ├── PlanHabitController.java         (已有)
-  ├── PlanScheduleEventController.java (已有)
-  ├── PlanCalendarController.java      (已有)
-  └── PlanFocusSessionController.java  (已有)
+  ├── PlanInfoController.java              (已有，需启用)
+  ├── PlanInfoTemplateController.java      (新增 — 计划模板)
+  ├── PlanHabitTemplateController.java     (新增 — 习惯模板)
+  ├── PlanScheduleEventTemplateController.java (新增 — 日程模板)
+  ├── PlanHabitController.java             (已有)
+  ├── PlanScheduleEventController.java     (已有)
+  ├── PlanCalendarController.java          (已有)
+  └── PlanFocusSessionController.java      (已有)
 ```
 
 ---
@@ -32,6 +34,34 @@ com.know.knowboot.controller.plan/
 | POST | `/from-plan/{planId}` | **从现有计划生成模板** | planId, templateName, description |
 
 ---
+
+## 2.3 PlanHabitTemplateController 端点
+
+### 路径前缀：`/api/plan/habit-template`
+
+| 方法 | 端点 | 说明 | 参数 |
+|------|------|------|------|
+| GET | `/list` | 分页查询习惯模板 | planType, visibility, keyword, pageNum, pageSize |
+| GET | `/hot` | 热门习惯模板 | limit(默认10) |
+| GET | `/{id}` | 获取习惯模板详情 | id |
+| POST | `` | 新增习惯模板 | PlanHabitTemplate body |
+| PUT | `` | 修改习惯模板 | PlanHabitTemplate body |
+| DELETE | `/{id}` | 删除习惯模板 | id |
+
+---
+
+## 2.4 PlanScheduleEventTemplateController 端点
+
+### 路径前缀：`/api/plan/event-template`
+
+| 方法 | 端点 | 说明 | 参数 |
+|------|------|------|------|
+| GET | `/list` | 分页查询日程模板 | planType, visibility, keyword, pageNum, pageSize |
+| GET | `/hot` | 热门日程模板 | limit(默认10) |
+| GET | `/{id}` | 获取日程模板详情 | id |
+| POST | `` | 新增日程模板 | PlanScheduleEventTemplate body |
+| PUT | `` | 修改日程模板 | PlanScheduleEventTemplate body |
+| DELETE | `/{id}` | 删除日程模板 | id |
 
 ## 2.3 PlanInfoController 端点（需启用）
 
@@ -191,12 +221,86 @@ public class PlanInfoTemplate implements Serializable {
     private Integer defaultPriority;
     private Integer defaultDurationDays;
     private String defaultRemindTime;
-    private String defaultHabits;      // JSON string
-    private String defaultEvents;      // JSON string
+    private String defaultHabits;      // JSON string (内联定义)
+    private String defaultHabitIds;    // JSON array (引用习惯模板ID)
+    private String defaultEvents;      // JSON string (内联定义)
+    private String defaultEventIds;    // JSON array (引用日程模板ID)
     private String defaultSubPlans;    // JSON string (递归子计划树)
     private Integer useCount;
     private BigDecimal rating;
     private Integer visibility;        // 0:私有 1:公开 2:系统预置
+    private Integer sort;
+    private Long createBy;
+    private Long createTime;
+    private Long updateBy;
+    private Long updateTime;
+    @TableLogic(value = "0", delval = "1")
+    private Integer delFlag;
+    private Long deleteTime;
+}
+```
+
+### 新增：PlanHabitTemplate.java
+
+```java
+@Data
+@TableName("plan_habit_template")
+public class PlanHabitTemplate implements Serializable {
+    private Long id;
+    private String templateName;
+    private String description;
+    private String name;              // 习惯名称
+    private String icon;
+    private String color;
+    private Integer frequencyType;    // 1:每天 2:每周 3:每月 4:自定义
+    private String frequencyRule;
+    private String reminderTime;
+    private String restDays;
+    private Integer targetDays;
+    private Integer targetValue;
+    private String targetUnit;
+    private String trackingType;      // boolean/numeric
+    private String planType;          // 适用计划类型(NULL=通用)
+    private String tags;
+    private Integer useCount;
+    private Integer visibility;       // 0:私有 1:公开 2:系统预置
+    private Integer sort;
+    private Long createBy;
+    private Long createTime;
+    private Long updateBy;
+    private Long updateTime;
+    @TableLogic(value = "0", delval = "1")
+    private Integer delFlag;
+    private Long deleteTime;
+}
+```
+
+### 新增：PlanScheduleEventTemplate.java
+
+```java
+@Data
+@TableName("plan_schedule_event_template")
+public class PlanScheduleEventTemplate implements Serializable {
+    private Long id;
+    private String templateName;
+    private String description;
+    private String title;
+    private Integer eventType;
+    private Integer quadrant;
+    private Integer priority;
+    private Integer isRepeat;
+    private Integer repeatType;
+    private String repeatRule;
+    private Integer isAllDay;
+    private Long startTime;
+    private Long endTime;
+    private Integer remindMinutes;
+    private String location;
+    private String description;       // 日程详情
+    private String planType;          // 适用计划类型(NULL=通用)
+    private String tags;
+    private Integer useCount;
+    private Integer visibility;       // 0:私有 1:公开 2:系统预置
     private Integer sort;
     private Long createBy;
     private Long createTime;
@@ -218,15 +322,21 @@ private Long templateId;
 ### 变更：PlanHabit.java 新增字段
 
 ```java
-@ApiModelProperty("创建自模板ID")
+@ApiModelProperty("创建自计划模板ID")
 private Long templateId;
+
+@ApiModelProperty("创建自习惯模板ID")
+private Long habitTemplateId;
 ```
 
 ### 变更：PlanScheduleEvent.java 新增字段
 
 ```java
-@ApiModelProperty("创建自模板ID")
+@ApiModelProperty("创建自计划模板ID")
 private Long templateId;
+
+@ApiModelProperty("创建自日程模板ID")
+private Long eventTemplateId;
 ```
 
 ---
@@ -235,11 +345,15 @@ private Long templateId;
 
 ```
 com.know.knowboot.service.plan/
-  ├── IPlanInfoTemplateService.java       (新增)
-  ├── IPlanInfoService.java               (新增/启用)
+  ├── IPlanInfoTemplateService.java           (新增 — 计划模板)
+  ├── IPlanHabitTemplateService.java          (新增 — 习惯模板)
+  ├── IPlanScheduleEventTemplateService.java  (新增 — 日程模板)
+  ├── IPlanInfoService.java                   (新增/启用)
   └── impl/
-      ├── PlanInfoTemplateServiceImpl.java (新增)
-      └── PlanInfoServiceImpl.java         (新增/启用)
+      ├── PlanInfoTemplateServiceImpl.java    (新增)
+      ├── PlanHabitTemplateServiceImpl.java   (新增)
+      ├── PlanScheduleEventTemplateServiceImpl.java (新增)
+      └── PlanInfoServiceImpl.java            (新增/启用)
 ```
 
 ### PlanInfoTemplateServiceImpl 关键方法
@@ -249,8 +363,8 @@ public interface IPlanInfoTemplateService {
     IPage<PlanInfoTemplate> page(String planType, Integer visibility, String keyword, int pageNum, int pageSize);
     List<PlanInfoTemplate> hotList(int limit);
     PlanInfoTemplate getDetail(Long id);
-    List<PlanInfoTemplate> getChildren(Long parentId);  // 查询子模板
-    List<PlanInfoTemplate> getTree(Long rootId);         // 递归获取模板树
+    List<PlanInfoTemplate> getChildren(Long parentId);
+    List<PlanInfoTemplate> getTree(Long rootId);
     Long create(PlanInfoTemplate template, Long userId);
     void update(PlanInfoTemplate template, Long userId);
     void delete(Long id, Long userId);
@@ -266,6 +380,38 @@ public interface IPlanInfoTemplateService {
 
     /** 递归提取计划树为 JSON — 内部方法 */
     private List<Map> extractPlanTree(Long planId);
+
+    /** 解析模板引用（合并 default_habit_ids + default_habits 内联定义） */
+    private List<Map> resolveHabitDefs(PlanInfoTemplate tpl);
+
+    /** 解析模板引用（合并 default_event_ids + default_events 内联定义） */
+    private List<Map> resolveEventDefs(PlanInfoTemplate tpl);
+}
+```
+
+### PlanHabitTemplateServiceImpl 关键方法
+
+```java
+public interface IPlanHabitTemplateService {
+    IPage<PlanHabitTemplate> page(String planType, Integer visibility, String keyword, int pageNum, int pageSize);
+    List<PlanHabitTemplate> hotList(int limit);
+    PlanHabitTemplate getDetail(Long id);
+    Long create(PlanHabitTemplate template, Long userId);
+    void update(PlanHabitTemplate template, Long userId);
+    void delete(Long id, Long userId);
+}
+```
+
+### PlanScheduleEventTemplateServiceImpl 关键方法
+
+```java
+public interface IPlanScheduleEventTemplateService {
+    IPage<PlanScheduleEventTemplate> page(String planType, Integer visibility, String keyword, int pageNum, int pageSize);
+    List<PlanScheduleEventTemplate> hotList(int limit);
+    PlanScheduleEventTemplate getDetail(Long id);
+    Long create(PlanScheduleEventTemplate template, Long userId);
+    void update(PlanScheduleEventTemplate template, Long userId);
+    void delete(Long id, Long userId);
 }
 ```
 
@@ -275,8 +421,10 @@ public interface IPlanInfoTemplateService {
 
 ```
 com.know.knowboot.mapper.plan/
-  ├── PlanInfoTemplateMapper.java  (新增)
-  └── PlanInfoMapper.java          (新增/启用)
+  ├── PlanInfoTemplateMapper.java         (新增)
+  ├── PlanHabitTemplateMapper.java        (新增)
+  ├── PlanScheduleEventTemplateMapper.java (新增)
+  └── PlanInfoMapper.java                 (新增/启用)
 ```
 
 使用 MyBatis-Plus，无需手写 SQL，标准 CRUD 通过 `ServiceImpl` 继承实现。

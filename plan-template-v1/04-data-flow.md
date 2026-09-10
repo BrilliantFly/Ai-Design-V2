@@ -68,6 +68,99 @@
 
 ## 4.2 实例化算法详解
 
+### 模板引用解析机制
+
+计划模板通过两种方式关联习惯和日程：
+
+1. **内联定义**（`default_habits` / `default_events`）：直接在 JSON 中写死配置
+2. **模板引用**（`default_habit_ids` / `default_event_ids`）：引用习惯/日程模板表的 ID
+
+实例化时，后端先解析模板引用，再合并内联定义：
+
+```java
+/**
+ * 解析习惯模板引用
+ * 1. 查询 plan_habit_template 表获取引用的习惯模板
+ * 2. 将模板数据转换为 Map 格式
+ * 3. 合并 default_habits 内联定义（内联优先）
+ */
+private List<Map> resolveHabitDefs(PlanInfoTemplate tpl) {
+    List<Map> allDefs = new ArrayList<>();
+
+    // 1. 解析模板引用
+    if (tpl.getDefaultHabitIds() != null) {
+        List<Long> habitIds = JSON.parseArray(tpl.getDefaultHabitIds(), Long.class);
+        if (habitIds != null && !habitIds.isEmpty()) {
+            List<PlanHabitTemplate> habitTemplates = habitTemplateMapper.selectBatchIds(habitIds);
+            for (PlanHabitTemplate ht : habitTemplates) {
+                Map def = new HashMap();
+                def.put("template_id", ht.getId());
+                def.put("name", ht.getName());
+                def.put("icon", ht.getIcon());
+                def.put("color", ht.getColor());
+                def.put("frequencyType", ht.getFrequencyType());
+                def.put("frequencyRule", ht.getFrequencyRule());
+                def.put("reminderTime", ht.getReminderTime());
+                def.put("restDays", ht.getRestDays());
+                def.put("targetDays", ht.getTargetDays());
+                def.put("targetValue", ht.getTargetValue());
+                def.put("targetUnit", ht.getTargetUnit());
+                def.put("trackingType", ht.getTrackingType());
+                allDefs.add(def);
+            }
+        }
+    }
+
+    // 2. 合并内联定义
+    if (tpl.getDefaultHabits() != null) {
+        List<Map> inlineDefs = JSON.parseArray(tpl.getDefaultHabits(), Map.class);
+        if (inlineDefs != null) {
+            allDefs.addAll(inlineDefs);
+        }
+    }
+
+    return allDefs;
+}
+
+/**
+ * 解析日程模板引用（同理）
+ */
+private List<Map> resolveEventDefs(PlanInfoTemplate tpl) {
+    List<Map> allDefs = new ArrayList<>();
+
+    if (tpl.getDefaultEventIds() != null) {
+        List<Long> eventIds = JSON.parseArray(tpl.getDefaultEventIds(), Long.class);
+        if (eventIds != null && !eventIds.isEmpty()) {
+            List<PlanScheduleEventTemplate> eventTemplates = eventTemplateMapper.selectBatchIds(eventIds);
+            for (PlanScheduleEventTemplate et : eventTemplates) {
+                Map def = new HashMap();
+                def.put("template_id", et.getId());
+                def.put("title", et.getTitle());
+                def.put("eventType", et.getEventType());
+                def.put("quadrant", et.getQuadrant());
+                def.put("priority", et.getPriority());
+                def.put("repeatType", et.getRepeatType());
+                def.put("repeatRule", et.getRepeatRule());
+                def.put("isAllDay", et.getIsAllDay());
+                def.put("remindMinutes", et.getRemindMinutes());
+                def.put("location", et.getLocation());
+                def.put("description", et.getDescription());
+                allDefs.add(def);
+            }
+        }
+    }
+
+    if (tpl.getDefaultEvents() != null) {
+        List<Map> inlineDefs = JSON.parseArray(tpl.getDefaultEvents(), Map.class);
+        if (inlineDefs != null) {
+            allDefs.addAll(inlineDefs);
+        }
+    }
+
+    return allDefs;
+}
+```
+
 ### `useTemplate` 核心逻辑（支持递归子计划）
 
 ```java
@@ -88,11 +181,13 @@ public UseTemplateResult useTemplate(Long templateId, Long userId, UseTemplateRe
 
     int[] counters = {0, 0, 0}; // [plans, habits, events]
 
-    // 3. 创建根级习惯
-    counters[1] += createHabitsFromJson(tpl.getDefaultHabits(), rootPlan.getId(), userId, templateId, req.getStartDate(), req.getCustomizations(), "root");
+    // 3. 解析并创建根级习惯（合并模板引用 + 内联定义）
+    List<Map> habitDefs = resolveHabitDefs(tpl);
+    counters[1] += createHabitsFromDefs(habitDefs, rootPlan.getId(), userId, templateId, req.getStartDate(), req.getCustomizations(), "root");
 
-    // 4. 创建根级日程
-    counters[2] += createEventsFromJson(tpl.getDefaultEvents(), rootPlan.getId(), userId, templateId, req.getCustomizations(), "root");
+    // 4. 解析并创建根级日程（合并模板引用 + 内联定义）
+    List<Map> eventDefs = resolveEventDefs(tpl);
+    counters[2] += createEventsFromDefs(eventDefs, rootPlan.getId(), userId, templateId, req.getCustomizations(), "root");
 
     // 5. 递归创建子计划树 ★
     if (tpl.getDefaultSubPlans() != null) {
@@ -150,16 +245,28 @@ private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
         planInfoMapper.insert(subPlan);
         count++;
 
-        // 创建该子计划的习惯
+        // 创建该子计划的习惯（合并模板引用 + 内联定义）
+        List<Map> subHabitDefs = new ArrayList<>();
+        if (def.get("habit_ids") != null) {
+            subHabitDefs.addAll(resolveHabitIds((List<Long>) def.get("habit_ids")));
+        }
         if (def.get("habits") != null) {
-            List<Map> habits = (List<Map>) def.get("habits");
-            count += createHabitsFromJson(JSON.toJSONString(habits), subPlan.getId(), userId, templateId, currentStartMs, customs, "sub_" + i);
+            subHabitDefs.addAll((List<Map>) def.get("habits"));
+        }
+        if (!subHabitDefs.isEmpty()) {
+            count += createHabitsFromDefs(subHabitDefs, subPlan.getId(), userId, templateId, currentStartMs, customs, "sub_" + i);
         }
 
-        // 创建该子计划的日程
+        // 创建该子计划的日程（合并模板引用 + 内联定义）
+        List<Map> subEventDefs = new ArrayList<>();
+        if (def.get("event_ids") != null) {
+            subEventDefs.addAll(resolveEventIds((List<Long>) def.get("event_ids")));
+        }
         if (def.get("events") != null) {
-            List<Map> events = (List<Map>) def.get("events");
-            count += createEventsFromJson(JSON.toJSONString(events), subPlan.getId(), userId, templateId, customs, "sub_" + i);
+            subEventDefs.addAll((List<Map>) def.get("events"));
+        }
+        if (!subEventDefs.isEmpty()) {
+            count += createEventsFromDefs(subEventDefs, subPlan.getId(), userId, templateId, customs, "sub_" + i);
         }
 
         // 递归创建下一层子计划
@@ -177,13 +284,12 @@ private int createSubPlans(List<Map> subPlanDefs, Long parentId, Long userId,
 }
 
 /**
- * 从 JSON 创建习惯列表
+ * 从定义列表创建习惯（合并模板引用 + 内联定义）
  */
-private int createHabitsFromJson(String habitsJson, Long planId, Long userId,
+private int createHabitsFromDefs(List<Map> defs, Long planId, Long userId,
                                   Long templateId, long startDateMs,
                                   UseTemplateRequest.Customizations customs, String scope) {
-    if (habitsJson == null) return 0;
-    List<Map> defs = JSON.parseArray(habitsJson, Map.class);
+    if (defs == null || defs.isEmpty()) return 0;
     int count = 0;
     for (int i = 0; i < defs.size(); i++) {
         Map def = defs.get(i);
@@ -211,6 +317,7 @@ private int createHabitsFromJson(String habitsJson, Long planId, Long userId,
         habit.setStatus(0);
         habit.setPlanId(planId);
         habit.setTemplateId(templateId);
+        habit.setHabitTemplateId(def.get("template_id") != null ? ((Number) def.get("template_id")).longValue() : null);
         habit.setUserId(userId);
         habit.setCreateBy(userId);
         habit.setCreateTime(System.currentTimeMillis());
@@ -221,12 +328,11 @@ private int createHabitsFromJson(String habitsJson, Long planId, Long userId,
 }
 
 /**
- * 从 JSON 创建日程列表
+ * 从定义列表创建日程（合并模板引用 + 内联定义）
  */
-private int createEventsFromJson(String eventsJson, Long planId, Long userId,
+private int createEventsFromDefs(List<Map> defs, Long planId, Long userId,
                                   Long templateId, UseTemplateRequest.Customizations customs, String scope) {
-    if (eventsJson == null) return 0;
-    List<Map> defs = JSON.parseArray(eventsJson, Map.class);
+    if (defs == null || defs.isEmpty()) return 0;
     int count = 0;
     for (int i = 0; i < defs.size(); i++) {
         Map def = defs.get(i);
@@ -244,6 +350,7 @@ private int createEventsFromJson(String eventsJson, Long planId, Long userId,
         event.setRemindMinutes((Integer) def.get("remindMinutes"));
         event.setPlanId(planId);
         event.setTemplateId(templateId);
+        event.setEventTemplateId(def.get("template_id") != null ? ((Number) def.get("template_id")).longValue() : null);
         event.setUserId(userId);
         event.setCreateBy(userId);
         event.setCreateTime(System.currentTimeMillis());
@@ -252,6 +359,57 @@ private int createEventsFromJson(String eventsJson, Long planId, Long userId,
         count++;
     }
     return count;
+}
+
+/**
+ * 通过模板ID列表解析习惯定义
+ */
+private List<Map> resolveHabitIds(List<Long> habitIds) {
+    List<Map> defs = new ArrayList<>();
+    if (habitIds == null || habitIds.isEmpty()) return defs;
+    List<PlanHabitTemplate> templates = habitTemplateMapper.selectBatchIds(habitIds);
+    for (PlanHabitTemplate ht : templates) {
+        Map def = new HashMap();
+        def.put("template_id", ht.getId());
+        def.put("name", ht.getName());
+        def.put("icon", ht.getIcon());
+        def.put("color", ht.getColor());
+        def.put("frequencyType", ht.getFrequencyType());
+        def.put("frequencyRule", ht.getFrequencyRule());
+        def.put("reminderTime", ht.getReminderTime());
+        def.put("restDays", ht.getRestDays());
+        def.put("targetDays", ht.getTargetDays());
+        def.put("targetValue", ht.getTargetValue());
+        def.put("targetUnit", ht.getTargetUnit());
+        def.put("trackingType", ht.getTrackingType());
+        defs.add(def);
+    }
+    return defs;
+}
+
+/**
+ * 通过模板ID列表解析日程定义
+ */
+private List<Map> resolveEventIds(List<Long> eventIds) {
+    List<Map> defs = new ArrayList<>();
+    if (eventIds == null || eventIds.isEmpty()) return defs;
+    List<PlanScheduleEventTemplate> templates = eventTemplateMapper.selectBatchIds(eventIds);
+    for (PlanScheduleEventTemplate et : templates) {
+        Map def = new HashMap();
+        def.put("template_id", et.getId());
+        def.put("title", et.getTitle());
+        def.put("eventType", et.getEventType());
+        def.put("quadrant", et.getQuadrant());
+        def.put("priority", et.getPriority());
+        def.put("repeatType", et.getRepeatType());
+        def.put("repeatRule", et.getRepeatRule());
+        def.put("isAllDay", et.getIsAllDay());
+        def.put("remindMinutes", et.getRemindMinutes());
+        def.put("location", et.getLocation());
+        def.put("description", et.getDescription());
+        defs.add(def);
+    }
+    return defs;
 }
 ```
 
@@ -270,11 +428,11 @@ public Long generateFromPlan(Long planId, String templateName, String descriptio
     // 2. 递归提取计划树
     List<Map> subPlansTree = extractPlanTree(planId);
 
-    // 3. 提取根级习惯和日程
-    String habitsJson = extractHabitsJson(planId);
-    String eventsJson = extractEventsJson(planId);
+    // 3. 提取根级习惯和日程（区分模板引用与内联定义）
+    ExtractResult rootHabits = extractHabitsWithRefs(planId);
+    ExtractResult rootEvents = extractEventsWithRefs(planId);
 
-    // 4. 创建模板
+    // 4. 创建模板（优先保留模板引用，减少 JSON 冗余）
     PlanInfoTemplate tpl = new PlanInfoTemplate();
     tpl.setTemplateName(templateName);
     tpl.setDescription(description);
@@ -282,8 +440,10 @@ public Long generateFromPlan(Long planId, String templateName, String descriptio
     tpl.setCategoryId(rootPlan.getCategoryId());
     tpl.setQuadrantId(rootPlan.getQuadrantId());
     tpl.setDefaultPriority(rootPlan.getPriority());
-    tpl.setDefaultHabits(habitsJson);
-    tpl.setDefaultEvents(eventsJson);
+    tpl.setDefaultHabitIds(JSON.toJSONString(rootHabits.templateIds));
+    tpl.setDefaultHabits(JSON.toJSONString(rootHabits.inlineDefs));
+    tpl.setDefaultEventIds(JSON.toJSONString(rootEvents.templateIds));
+    tpl.setDefaultEvents(JSON.toJSONString(rootEvents.inlineDefs));
     tpl.setDefaultSubPlans(JSON.toJSONString(subPlansTree));
     tpl.setVisibility(visibility);
     tpl.setCreateBy(userId);
@@ -291,6 +451,83 @@ public Long generateFromPlan(Long planId, String templateName, String descriptio
     templateMapper.insert(tpl);
 
     return tpl.getId();
+}
+
+/**
+ * 提取结果：模板引用 + 内联定义
+ */
+private static class ExtractResult {
+    List<Long> templateIds;
+    List<Map> inlineDefs;
+    ExtractResult() {
+        this.templateIds = new ArrayList<>();
+        this.inlineDefs = new ArrayList<>();
+    }
+}
+
+/**
+ * 提取习惯并保留模板引用
+ * 有 habit_template_id 的记录存为引用，其余存为内联定义
+ */
+private ExtractResult extractHabitsWithRefs(Long planId) {
+    List<PlanHabit> habits = habitMapper.selectList(
+        new LambdaQueryWrapper<PlanHabit>()
+            .eq(PlanHabit::getPlanId, planId)
+            .eq(PlanHabit::getDelFlag, 0)
+    );
+
+    ExtractResult result = new ExtractResult();
+    for (PlanHabit h : habits) {
+        if (h.getHabitTemplateId() != null) {
+            result.templateIds.add(h.getHabitTemplateId()); // 保留引用
+        } else {
+            Map def = new HashMap();
+            def.put("name", h.getName());
+            def.put("icon", h.getIcon());
+            def.put("color", h.getColor());
+            def.put("frequencyType", h.getFrequencyType());
+            def.put("frequencyRule", h.getFrequencyRule());
+            def.put("reminderTime", h.getReminderTime());
+            def.put("restDays", h.getRestDays());
+            def.put("targetDays", h.getTargetDays());
+            def.put("targetValue", h.getTargetValue());
+            def.put("targetUnit", h.getTargetUnit());
+            def.put("trackingType", h.getTrackingType());
+            result.inlineDefs.add(def);
+        }
+    }
+    return result;
+}
+
+/**
+ * 提取日程并保留模板引用（同理）
+ */
+private ExtractResult extractEventsWithRefs(Long planId) {
+    List<PlanScheduleEvent> events = eventMapper.selectList(
+        new LambdaQueryWrapper<PlanScheduleEvent>()
+            .eq(PlanScheduleEvent::getPlanId, planId)
+            .eq(PlanScheduleEvent::getDelFlag, 0)
+    );
+
+    ExtractResult result = new ExtractResult();
+    for (PlanScheduleEvent e : events) {
+        if (e.getEventTemplateId() != null) {
+            result.templateIds.add(e.getEventTemplateId()); // 保留引用
+        } else {
+            Map def = new HashMap();
+            def.put("title", e.getTitle());
+            def.put("eventType", e.getEventType());
+            def.put("quadrant", e.getQuadrant());
+            def.put("priority", e.getPriority());
+            def.put("repeatType", e.getRepeatType());
+            def.put("repeatRule", e.getRepeatRule());
+            def.put("isAllDay", e.getIsAllDay());
+            def.put("remindMinutes", e.getRemindMinutes());
+            def.put("location", e.getLocation());
+            result.inlineDefs.add(def);
+        }
+    }
+    return result;
 }
 
 /**
@@ -317,8 +554,15 @@ private List<Map> extractPlanTree(Long parentId) {
             node.put("duration_days", (int) days);
         }
         node.put("description", child.getRemark());
-        node.put("habits", parseJsonArray(extractHabitsJson(child.getId())));
-        node.put("events", parseJsonArray(extractEventsJson(child.getId())));
+
+        // 子节点习惯/日程也保留模板引用
+        ExtractResult subHabits = extractHabitsWithRefs(child.getId());
+        ExtractResult subEvents = extractEventsWithRefs(child.getId());
+        if (!subHabits.templateIds.isEmpty()) node.put("habit_ids", subHabits.templateIds);
+        if (!subHabits.inlineDefs.isEmpty()) node.put("habits", subHabits.inlineDefs);
+        if (!subEvents.templateIds.isEmpty()) node.put("event_ids", subEvents.templateIds);
+        if (!subEvents.inlineDefs.isEmpty()) node.put("events", subEvents.inlineDefs);
+
         node.put("sub_plans", extractPlanTree(child.getId())); // 递归
         tree.add(node);
     }
@@ -334,12 +578,15 @@ private List<Map> extractPlanTree(Long parentId) {
 |------|----------|
 | 模板被删除后使用 | `@TableLogic` 软删除，查询时过滤，使用前校验 `del_flag=0` |
 | 模板字段 JSON 格式错误 | `try-catch` 解析，失败时返回错误提示，不创建部分数据 |
+| 引用的习惯/日程模板被删除 | 实例化时 `selectBatchIds` 过滤已删除记录，优先使用 `del_flag=0` 的记录 |
+| 引用 + 内联同名冲突 | 内联定义覆盖模板引用（内联优先） |
 | 习惯/日程/子计划创建失败 | `@Transactional` 事务回滚，全部成功才提交 |
 | 并发使用同一模板 | `use_count` 非关键字段，允许最终一致；计划创建无冲突 |
 | 自定义修改超出范围 | 后端校验 index 不超过 JSON 数组长度 |
 | 子计划嵌套过深 | 前端限制最大 5 层，后端 `createSubPlans` 递归安全检查（深度计数器） |
 | 子计划时间线冲突 | 同级子计划按 `duration_days` 顺序排列，自动计算 startDate/endDate |
 | 跳过子计划后时间线断裂 | 跳过的子计划不占时间，后续兄弟子计划向前填充 |
+| 习惯/日程模板 visibility=0 被他人使用 | 仅创建者可用（`create_by = userId` 校验） |
 
 ---
 

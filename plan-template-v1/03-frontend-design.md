@@ -40,6 +40,66 @@ export function generateTemplateFromPlan(planId, data) {
 }
 ```
 
+### `src/api/plan/habit-template.ts`（新增）
+
+```typescript
+import request from '@/utils/request'
+
+export function getHabitTemplateList(params) {
+  return request.get({ url: '/plan/habit-template/list', data: params })
+}
+
+export function getHotHabitTemplates(params) {
+  return request.get({ url: '/plan/habit-template/hot', data: params })
+}
+
+export function getHabitTemplateDetail(id) {
+  return request.get({ url: `/plan/habit-template/${id}` })
+}
+
+export function createHabitTemplate(data) {
+  return request.post({ url: '/plan/habit-template', data })
+}
+
+export function updateHabitTemplate(data) {
+  return request.put({ url: '/plan/habit-template', data })
+}
+
+export function deleteHabitTemplate(id) {
+  return request.delete({ url: `/plan/habit-template/${id}` })
+}
+```
+
+### `src/api/plan/event-template.ts`（新增）
+
+```typescript
+import request from '@/utils/request'
+
+export function getEventTemplateList(params) {
+  return request.get({ url: '/plan/event-template/list', data: params })
+}
+
+export function getHotEventTemplates(params) {
+  return request.get({ url: '/plan/event-template/hot', data: params })
+}
+
+export function getEventTemplateDetail(id) {
+  return request.get({ url: `/plan/event-template/${id}` })
+}
+
+export function createEventTemplate(data) {
+  return request.post({ url: '/plan/event-template', data })
+}
+
+export function updateEventTemplate(data) {
+  return request.put({ url: '/plan/event-template', data })
+}
+
+export function deleteEventTemplate(id) {
+  return request.delete({ url: `/plan/event-template/${id}` })
+}
+```
+
 ### `src/api/plan/info.ts`（新增）
 
 ```typescript
@@ -84,6 +144,22 @@ export function updatePlanProgress(id, progress) {
 {
   "path": "pages/plan/template/use",
   "style": { "navigationBarTitleText": "使用模板" }
+},
+{
+  "path": "pages/plan/habit-template/index",
+  "style": { "navigationBarTitleText": "习惯模板" }
+},
+{
+  "path": "pages/plan/habit-template/detail",
+  "style": { "navigationBarTitleText": "习惯模板详情" }
+},
+{
+  "path": "pages/plan/event-template/index",
+  "style": { "navigationBarTitleText": "日程模板" }
+},
+{
+  "path": "pages/plan/event-template/detail",
+  "style": { "navigationBarTitleText": "日程模板详情" }
 }
 ```
 
@@ -258,7 +334,122 @@ onMounted
 
 ---
 
-## 3.6 模板管理（我的模板）
+## 3.6 习惯模板管理 `habit-template/index.vue`
+
+### 页面结构
+
+```
+┌─────────────────────────────────────────────┐
+│ 🏃 习惯模板                         [+ 新建]│
+├─────────────────────────────────────────────┤
+│ 🔍 搜索习惯模板...                            │
+├─────────────────────────────────────────────┤
+│ [全部] [健身] [读书] [工作] [通用]             │
+├─────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────┐ │
+│ │ 🏃 每日晨跑    30天  5公里/天  [使用 236]│ │
+│ │ 📖 每日阅读    30天  30页/天   [使用 189]│ │
+│ │ 🗣️ 每日站会    14天  每天      [使用 312]│ │
+│ │ 🔍 代码Review  14天  每天      [使用 156]│ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ ─── 我的习惯模板 ──────────────────────────  │
+│ ┌─────────────────────────────────────────┐ │
+│ │ ✨ 自定义习惯1            [编辑] [删除]  │ │
+│ └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+### 习惯模板详情/编辑表单
+
+```
+┌─────────────────────────────────────────────┐
+│ ← 习惯模板详情                      [保存]  │
+├─────────────────────────────────────────────┤
+│ 习惯名称: [每日晨跑                        ] │
+│ 图标:     [🏃] 颜色: [#22b573]              │
+│ 描述:     [30天晨跑养成计划                  ] │
+│                                             │
+│ ─── 习惯配置 ──────────────────────────────  │
+│ 频率类型: [每天 ▼]                           │
+│ 提醒时间: [07:00]                            │
+│ 休息日:   [周日] [周六]                       │
+│ 目标天数: [30] 天                            │
+│ 目标数值: [5] 公里                           │
+│ 追踪类型: [数值打卡 ▼]                       │
+│                                             │
+│ ─── 适用场景 ──────────────────────────────  │
+│ 适用计划类型: [健身 ▼]  标签: [健身,跑步]     │
+│ 可见性: [公开 ▼]                             │
+│                                             │
+│ ┌──────────────────────────────────────┐   │
+│ │          [ 💾 保存模板 ]              │   │
+│ └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## 3.7 日程模板管理 `event-template/index.vue`
+
+### 页面结构
+
+```
+┌─────────────────────────────────────────────┐
+│ 📅 日程模板                         [+ 新建]│
+├─────────────────────────────────────────────┤
+│ 🔍 搜索日程模板...                            │
+├─────────────────────────────────────────────┤
+│ [全部] [工作] [学习] [通用]                   │
+├─────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────┐ │
+│ │ 📋 制定周计划    每周一  重要不紧急       │ │
+│ │ 📋 复盘总结      每周五  重要不紧急       │ │
+│ │ 📋 冲刺启动会    一次性  重要紧急         │ │
+│ │ 📋 交付评审      一次性  重要紧急         │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ ─── 我的日程模板 ──────────────────────────  │
+│ ┌─────────────────────────────────────────┐ │
+│ │ ✨ 自定义日程1            [编辑] [删除]  │ │
+│ └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+### 日程模板详情/编辑表单
+
+```
+┌─────────────────────────────────────────────┐
+│ ← 日程模板详情                      [保存]  │
+├─────────────────────────────────────────────┤
+│ 模板名称: [制定周计划                      ] │
+│ 日程标题: [制定周计划                      ] │
+│ 描述:     [每周一制定本周计划               ] │
+│                                             │
+│ ─── 日程配置 ──────────────────────────────  │
+│ 日程类型: [普通 ▼]                           │
+│ 四象限:   [重要不紧急 ▼]                     │
+│ 优先级:   [⭐⭐]                             │
+│ 是否重复: [是 ▼]                             │
+│ 重复类型: [每周 ▼]                           │
+│ 重复规则: [周一]                             │
+│ 全天:     [否]                               │
+│ 提前提醒: [15] 分钟                          │
+│ 地点:     [办公室                          ] │
+│                                             │
+│ ─── 适用场景 ──────────────────────────────  │
+│ 适用计划类型: [全部 ▼]  标签: [周计划]       │
+│ 可见性: [公开 ▼]                             │
+│                                             │
+│ ┌──────────────────────────────────────┐   │
+│ │          [ 💾 保存模板 ]              │   │
+│ └──────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## 3.8 模板管理（我的模板）
 
 ### 入口
 
@@ -286,7 +477,7 @@ onMounted
 
 ---
 
-## 3.7 组件拆分
+## 3.10 组件拆分
 
 ```
 src/pages/plan/template/
@@ -301,6 +492,20 @@ src/pages/plan/template/
       ├── TemplateEventPreview.vue # 日程预览列表
       ├── UseHabitEditor.vue       # 使用时习惯编辑器
       └── UseEventEditor.vue       # 使用时日程编辑器
+
+src/pages/plan/habit-template/
+  ├── index.vue                    # 习惯模板列表页
+  ├── detail.vue                   # 习惯模板详情/编辑页
+  └── components/
+      ├── HabitTemplateCard.vue    # 习惯模板卡片
+      └── HabitTemplateForm.vue    # 习惯模板表单
+
+src/pages/plan/event-template/
+  ├── index.vue                    # 日程模板列表页
+  ├── detail.vue                   # 日程模板详情/编辑页
+  └── components/
+      ├── EventTemplateCard.vue    # 日程模板卡片
+      └── EventTemplateForm.vue    # 日程模板表单
 ```
 
 ---

@@ -1,6 +1,8 @@
 # 01 - 数据库表结构设计
 
-## 1.1 新增表：plan_info_template（计划模板）
+## 1.1 新增表
+
+### 1.1.1 plan_info_template（计划模板）
 
 ```sql
 CREATE TABLE plan_info_template (
@@ -24,8 +26,10 @@ CREATE TABLE plan_info_template (
   default_remind_time VARCHAR(16) DEFAULT NULL COMMENT '默认提醒时间(HH:mm)',
 
   -- ===== 模板内容（JSON） =====
-  default_habits      JSON       DEFAULT NULL COMMENT '默认习惯列表JSON',
-  default_events      JSON       DEFAULT NULL COMMENT '默认日程列表JSON',
+  default_habits      JSON       DEFAULT NULL COMMENT '默认习惯列表JSON(内联定义)',
+  default_habit_ids   JSON       DEFAULT NULL COMMENT '引用习惯模板ID列表(JSON数组)',
+  default_events      JSON       DEFAULT NULL COMMENT '默认日程列表JSON(内联定义)',
+  default_event_ids   JSON       DEFAULT NULL COMMENT '引用日程模板ID列表(JSON数组)',
   default_sub_plans   JSON       DEFAULT NULL COMMENT '默认子计划树(JSON递归结构)',
 
   -- ===== 使用统计 =====
@@ -48,9 +52,118 @@ CREATE TABLE plan_info_template (
 ) COMMENT = '计划模板表';
 ```
 
+### 1.1.2 plan_habit_template（习惯模板）
+
+```sql
+CREATE TABLE plan_habit_template (
+  -- ===== 基础信息 =====
+  id              BIGINT       NOT NULL  COMMENT '主键',
+  template_name   VARCHAR(128) NOT NULL  COMMENT '模板名称(如"晨跑30天")',
+  description     VARCHAR(512) DEFAULT NULL COMMENT '模板描述',
+
+  -- ===== 习惯配置 =====
+  name            VARCHAR(64)  NOT NULL  COMMENT '习惯名称',
+  icon            VARCHAR(32)  DEFAULT NULL COMMENT '图标(emoji)',
+  color           VARCHAR(16)  DEFAULT NULL COMMENT '主题颜色(hex)',
+  frequency_type  INT          DEFAULT 1 COMMENT '频率类型(1:每天 2:每周 3:每月 4:自定义)',
+  frequency_rule  VARCHAR(256) DEFAULT NULL COMMENT '频率规则(JSON)',
+  reminder_time   VARCHAR(16)  DEFAULT NULL COMMENT '提醒时间(HH:mm)',
+  rest_days       VARCHAR(32)  DEFAULT NULL COMMENT '休息日(逗号分隔: 0周日,1周一...6周六)',
+  target_days     INT          DEFAULT NULL COMMENT '目标天数(习惯养成周期)',
+  target_value    INT          DEFAULT NULL COMMENT '目标数值',
+  target_unit     VARCHAR(16)  DEFAULT NULL COMMENT '目标单位(次/分钟/公里/页)',
+  tracking_type   VARCHAR(16)  DEFAULT 'boolean' COMMENT '追踪类型(boolean:打卡 numeric:数值)',
+
+  -- ===== 适用场景 =====
+  plan_type       VARCHAR(32)  DEFAULT NULL COMMENT '适用计划类型(NULL=通用)',
+  tags            VARCHAR(256) DEFAULT NULL COMMENT '标签(逗号分隔)',
+
+  -- ===== 使用统计 =====
+  use_count       INT          DEFAULT 0   COMMENT '使用次数',
+
+  -- ===== 可见性 =====
+  visibility      TINYINT      DEFAULT 1   COMMENT '可见性(0:私有 1:公开 2:系统预置)',
+  sort            INT          DEFAULT 0   COMMENT '排序(越大越前)',
+
+  -- ===== 标准字段 =====
+  create_by       BIGINT       DEFAULT NULL COMMENT '创建人',
+  create_time     BIGINT       DEFAULT NULL COMMENT '创建时间',
+  update_by       BIGINT       DEFAULT NULL COMMENT '更新人',
+  update_time     BIGINT       DEFAULT NULL COMMENT '更新时间',
+  del_flag        TINYINT      DEFAULT 0   COMMENT '删除标记(0:正常 1:删除)',
+  delete_time     BIGINT       DEFAULT 0   COMMENT '删除时间',
+
+  PRIMARY KEY (id)
+) COMMENT = '习惯模板表';
+```
+
+### 1.1.3 plan_schedule_event_template（日程模板）
+
+```sql
+CREATE TABLE plan_schedule_event_template (
+  -- ===== 基础信息 =====
+  id              BIGINT       NOT NULL  COMMENT '主键',
+  template_name   VARCHAR(128) NOT NULL  COMMENT '模板名称(如"每周复盘")',
+  description     VARCHAR(512) DEFAULT NULL COMMENT '模板描述',
+
+  -- ===== 日程配置 =====
+  title           VARCHAR(128) NOT NULL  COMMENT '日程标题',
+  event_type      INT          DEFAULT 1 COMMENT '日程类型(1:普通 2:会议 3:提醒)',
+  quadrant        INT          DEFAULT 2 COMMENT '四象限(1:重要紧急 2:重要不紧急 3:紧急不重要 4:不重要不紧急)',
+  priority        INT          DEFAULT 1 COMMENT '优先级(1-5)',
+  is_repeat       TINYINT      DEFAULT 0 COMMENT '是否重复(0:否 1:是)',
+  repeat_type     INT          DEFAULT NULL COMMENT '重复类型(1:每天 2:每周 3:每月 4:自定义)',
+  repeat_rule     VARCHAR(256) DEFAULT NULL COMMENT '重复规则(JSON)',
+  is_all_day      TINYINT      DEFAULT 0 COMMENT '是否全天(0:否 1:是)',
+  start_time      BIGINT       DEFAULT NULL COMMENT '开始时间(毫秒时间戳)',
+  end_time        BIGINT       DEFAULT NULL COMMENT '结束时间(毫秒时间戳)',
+  remind_minutes  INT          DEFAULT NULL COMMENT '提前提醒(分钟) null=不提醒',
+  location        VARCHAR(256) DEFAULT NULL COMMENT '地点',
+  description     VARCHAR(512) DEFAULT NULL COMMENT '日程详情描述',
+
+  -- ===== 适用场景 =====
+  plan_type       VARCHAR(32)  DEFAULT NULL COMMENT '适用计划类型(NULL=通用)',
+  tags            VARCHAR(256) DEFAULT NULL COMMENT '标签(逗号分隔)',
+
+  -- ===== 使用统计 =====
+  use_count       INT          DEFAULT 0   COMMENT '使用次数',
+
+  -- ===== 可见性 =====
+  visibility      TINYINT      DEFAULT 1   COMMENT '可见性(0:私有 1:公开 2:系统预置)',
+  sort            INT          DEFAULT 0   COMMENT '排序(越大越前)',
+
+  -- ===== 标准字段 =====
+  create_by       BIGINT       DEFAULT NULL COMMENT '创建人',
+  create_time     BIGINT       DEFAULT NULL COMMENT '创建时间',
+  update_by       BIGINT       DEFAULT NULL COMMENT '更新人',
+  update_time     BIGINT       DEFAULT NULL COMMENT '更新时间',
+  del_flag        TINYINT      DEFAULT 0   COMMENT '删除标记(0:正常 1:删除)',
+  delete_time     BIGINT       DEFAULT 0   COMMENT '删除时间',
+
+  PRIMARY KEY (id)
+) COMMENT = '日程模板表';
+```
+
 ### 字段说明
 
-#### 默认习惯列表 JSON 格式
+#### 模板引用机制
+
+计划模板通过两种方式关联习惯和日程：
+
+1. **内联定义**（`default_habits` / `default_events`）：直接在 JSON 中写死习惯/日程配置
+2. **模板引用**（`default_habit_ids` / `default_event_ids`）：引用 `plan_habit_template` / `plan_schedule_event_template` 的 ID
+
+实例化时，后端合并两种来源：先解析模板引用，再合并内联定义。
+
+```json
+// plan_info_template.default_habit_ids 示例
+[1, 3, 5]  // 引用 habit_template 表的 ID
+
+// plan_info_template.default_event_ids 示例
+[2, 4]     // 引用 event_template 表的 ID
+```
+
+#### 默认习惯列表 JSON 格式（内联定义）
 
 ```json
 [
@@ -82,7 +195,7 @@ CREATE TABLE plan_info_template (
 ]
 ```
 
-#### 默认日程列表 JSON 格式
+#### 默认日程列表 JSON 格式（内联定义）
 
 ```json
 [
@@ -112,6 +225,10 @@ CREATE TABLE plan_info_template (
 #### 默认子计划树 JSON 格式（递归结构）
 
 每个子计划节点可包含自身的 `habits`、`events`、`sub_plans`，形成任意深度的计划树：
+- `habits[]`：内联习惯定义
+- `habit_ids[]`：引用习惯模板ID
+- `events[]`：内联日程定义
+- `event_ids[]`：引用日程模板ID
 
 ```json
 [
@@ -122,6 +239,7 @@ CREATE TABLE plan_info_template (
     "priority": 3,
     "duration_days": 7,
     "description": "搭建基础架构，完成核心模块开发",
+    "habit_ids": [3],  // 引用习惯模板ID
     "habits": [
       {
         "name": "每日代码审查",
@@ -134,6 +252,7 @@ CREATE TABLE plan_info_template (
         "trackingType": "boolean"
       }
     ],
+    "event_ids": [3],  // 引用日程模板ID
     "events": [
       {
         "title": "技术方案评审",
@@ -159,9 +278,8 @@ CREATE TABLE plan_info_template (
         "plan_name": "API 开发",
         "priority": 3,
         "duration_days": 3,
-        "habits": [
-          {"name": "接口自测", "icon": "✅", "color": "#22b573", "frequencyType": 1, "targetDays": 3, "trackingType": "boolean"}
-        ],
+        "habit_ids": [4],  // 引用代码Review习惯模板
+        "habits": [],
         "events": [],
         "sub_plans": []
       }
@@ -174,12 +292,10 @@ CREATE TABLE plan_info_template (
     "priority": 3,
     "duration_days": 14,
     "description": "完成核心业务逻辑开发",
-    "habits": [
-      {"name": "每日站会", "icon": "🗣️", "color": "#6366f1", "frequencyType": 1, "reminderTime": "09:00", "restDays": "0,6", "targetDays": 14, "trackingType": "boolean"}
-    ],
-    "events": [
-      {"title": "中期 Demo", "eventType": 1, "quadrant": 1, "priority": 3, "isAllDay": 0, "remindMinutes": 60}
-    ],
+    "habit_ids": [3],  // 引用每日站会模板
+    "habits": [],
+    "event_ids": [4],  // 引用交付评审模板
+    "events": [],
     "sub_plans": [
       {
         "plan_name": "前端开发",
@@ -206,10 +322,8 @@ CREATE TABLE plan_info_template (
     "priority": 2,
     "duration_days": 7,
     "habits": [],
-    "events": [
-      {"title": "UAT 测试", "eventType": 1, "quadrant": 1, "priority": 3, "isAllDay": 1},
-      {"title": "上线评审", "eventType": 1, "quadrant": 1, "priority": 3, "isAllDay": 0, "remindMinutes": 60}
-    ],
+    "event_ids": [1, 2],  // 引用周计划+复盘模板
+    "events": [],
     "sub_plans": []
   }
 ]
@@ -230,14 +344,16 @@ ALTER TABLE plan_info
 
 ```sql
 ALTER TABLE plan_habit
-  ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自模板ID' AFTER plan_id;
+  ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自计划模板ID' AFTER plan_id,
+  ADD COLUMN habit_template_id BIGINT DEFAULT NULL COMMENT '创建自习惯模板ID' AFTER template_id;
 ```
 
 ### plan_schedule_event 新增字段
 
 ```sql
 ALTER TABLE plan_schedule_event
-  ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自模板ID' AFTER plan_id;
+  ADD COLUMN template_id BIGINT DEFAULT NULL COMMENT '创建自计划模板ID' AFTER plan_id,
+  ADD COLUMN event_template_id BIGINT DEFAULT NULL COMMENT '创建自日程模板ID' AFTER template_id;
 ```
 
 ### plan_info 确认启用字段
@@ -261,8 +377,18 @@ CREATE INDEX idx_template_plan_type ON plan_info_template(plan_type);
 CREATE INDEX idx_template_parent_id ON plan_info_template(parent_id);
 CREATE INDEX idx_template_visibility ON plan_info_template(visibility, del_flag);
 CREATE INDEX idx_template_sort ON plan_info_template(sort DESC, create_time DESC);
-CREATE INDEX idx_habit_template_id ON plan_habit(template_id);
-CREATE INDEX idx_event_template_id ON plan_schedule_event(template_id);
+CREATE INDEX idx_habit_template_plan_type ON plan_habit_template(plan_type);
+CREATE INDEX idx_habit_template_visibility ON plan_habit_template(visibility, del_flag);
+CREATE INDEX idx_habit_template_sort ON plan_habit_template(sort DESC, create_time DESC);
+CREATE INDEX idx_event_template_plan_type ON plan_schedule_event_template(plan_type);
+CREATE INDEX idx_event_template_visibility ON plan_schedule_event_template(visibility, del_flag);
+CREATE INDEX idx_event_template_sort ON plan_schedule_event_template(sort DESC, create_time DESC);
+CREATE INDEX idx_habit_plan_id ON plan_habit(plan_id);
+CREATE INDEX idx_habit_plan_template_id ON plan_habit(template_id);
+CREATE INDEX idx_habit_habit_template_id ON plan_habit(habit_template_id);
+CREATE INDEX idx_event_plan_id ON plan_schedule_event(plan_id);
+CREATE INDEX idx_event_plan_template_id ON plan_schedule_event(template_id);
+CREATE INDEX idx_event_event_template_id ON plan_schedule_event(event_template_id);
 CREATE INDEX idx_plan_parent_id ON plan_info(parent_id);
 CREATE INDEX idx_plan_template_id ON plan_info(template_id);
 ```
@@ -272,21 +398,30 @@ CREATE INDEX idx_plan_template_id ON plan_info(template_id);
 ## 1.4 数据关系图
 
 ```
-plan_type (计划类型字典)
-    │
-    │ type_code
-    ▼
-plan_info_template ─── parent_id ──► plan_info_template (父模板)
-    │                                    │
-    │  template_id (创建自模板)           │ parent_id (模板层级)
-    │  template_id (创建自模板)           │
-    ├────────────────────┐               ▼
-    ▼                    ▼          plan_info_template (子模板)
-plan_habit          plan_schedule_event
-    │                    │
-    │ planId (可选)      │ planId (可选)
-    ▼                    ▼
-plan_info ◄────────────────────── plan_info (通过 planId)
+                    ┌─────────────────────────────────────┐
+                    │         模板层级（WBS）              │
+                    └─────────────────────────────────────┘
+                                      │
+                                      │ parent_id
+                                      ▼
+plan_type ──► plan_info_template ──────────────► plan_info_template (父/子模板)
+                    │
+         ┌──────────┼──────────┐
+         │          │          │
+         ▼          ▼          ▼
+  default_habit_ids  default_event_ids  default_sub_plans (JSON递归)
+         │          │
+         ▼          ▼
+plan_habit_template  plan_schedule_event_template
+  (习惯模板表)         (日程模板表)
+         │          │
+         │ template_id (引用)
+         ▼          ▼
+plan_habit     plan_schedule_event
+    │               │
+    │ planId        │ planId
+    ▼               ▼
+plan_info ◄─────────── plan_info (通过 planId)
     │
     │ parent_id (WBS 递归父子关系)
     ▼
@@ -295,6 +430,21 @@ plan_info (子计划) ──► plan_info (孙计划) ──► ...
     │ id
     ▼
 plan_habit_record (打卡记录)
+```
+
+### 模板引用流程
+
+```
+plan_info_template
+  │
+  ├─ default_habit_ids: [1, 3]  ──► plan_habit_template.id IN (1, 3)
+  │     └─ 合并 default_habits 内联定义
+  │
+  ├─ default_event_ids: [2, 4]  ──► plan_schedule_event_template.id IN (2, 4)
+  │     └─ 合并 default_events 内联定义
+  │
+  └─ default_sub_plans: [递归JSON]
+        └─ 每个子节点也支持 habits[] / events[] 引用或内联
 ```
 
 ### 模板层级树示意
@@ -325,6 +475,38 @@ plan_habit_record (打卡记录)
 - **习惯**（`plan_habit.plan_id`）
 - **日程**（`plan_schedule_event.plan_id`）
 - **子计划**（`plan_info.parent_id`）
+
+### 模板引用方式说明
+
+计划模板支持两种方式配置习惯和日程：
+
+**方式一：内联定义**（适合一次性使用的模板）
+```json
+{
+  "default_habits": "[{\"name\":\"晨跑\",\"icon\":\"🏃\",...}]",
+  "default_events": "[{\"title\":\"制定计划\",\"eventType\":1,...}]"
+}
+```
+
+**方式二：模板引用**（适合复用已有习惯/日程模板）
+```json
+{
+  "default_habit_ids": "[1, 3]",
+  "default_event_ids": [2, 4]"
+}
+```
+
+**方式三：混合使用**（引用模板 + 内联补充）
+```json
+{
+  "default_habit_ids": "[1, 3]",
+  "default_habits": "[{\"name\":\"自定义习惯\",\"icon\":\"✨\",...}]",
+  "default_event_ids": "[2]",
+  "default_events": "[{\"title\":\"自定义日程\",\"eventType\":1,...}]"
+}
+```
+
+**优先级**：内联定义 > 模板引用（同名时内联覆盖引用）
 
 ---
 
@@ -377,4 +559,24 @@ INSERT INTO plan_info_template (
   '[{"plan_name":"阶段一：需求确认","plan_type":"project","priority":3,"duration_days":2,"description":"需求分析与任务拆解","habits":[{"name":"需求文档更新","icon":"📝","color":"#f59e0b","frequencyType":1,"targetDays":2,"trackingType":"boolean"}],"events":[{"title":"需求评审会","eventType":1,"quadrant":1,"priority":3,"isAllDay":0,"remindMinutes":30}],"sub_plans":[{"plan_name":"功能清单确认","priority":3,"duration_days":1,"habits":[],"events":[],"sub_plans":[]},{"plan_name":"技术方案设计","priority":3,"duration_days":1,"habits":[],"events":[{"title":"方案评审","eventType":1,"quadrant":1,"priority":3}],"sub_plans":[]}]},{"plan_name":"阶段二：核心开发","plan_type":"project","priority":3,"duration_days":8,"description":"核心功能开发与联调","habits":[{"name":"每日站会","icon":"🗣️","color":"#6366f1","frequencyType":1,"reminderTime":"09:00","restDays":"0,6","targetDays":8,"trackingType":"boolean"},{"name":"代码 Review","icon":"🔍","color":"#a855f7","frequencyType":1,"reminderTime":"17:00","restDays":"0,6","targetDays":8,"trackingType":"boolean"}],"events":[{"title":"中期 Demo","eventType":1,"quadrant":1,"priority":3,"isAllDay":0,"remindMinutes":60}],"sub_plans":[{"plan_name":"前端开发","priority":3,"duration_days":6,"habits":[{"name":"组件文档","icon":"📦","color":"#22b573","frequencyType":2,"frequencyRule":"{\\"weekDays\\":[5]}","targetDays":6,"trackingType":"boolean"}],"events":[],"sub_plans":[]},{"plan_name":"后端开发","priority":3,"duration_days":7,"habits":[{"name":"单元测试","icon":"🧪","color":"#f97316","frequencyType":1,"targetDays":7,"trackingType":"numeric","targetValue":80,"targetUnit":"%"}],"events":[],"sub_plans":[]},{"plan_name":"接口联调","priority":2,"duration_days":3,"habits":[],"events":[{"title":"联调会议","eventType":1,"quadrant":2,"priority":2,"repeatType":2,"repeatRule":"{\\"weekDays\\":[2,4]}"}],"sub_plans":[]}]},{"plan_name":"阶段三：测试上线","plan_type":"project","priority":2,"duration_days":4,"description":"测试修复与部署上线","habits":[],"events":[{"title":"UAT 测试","eventType":1,"quadrant":1,"priority":3,"isAllDay":1},{"title":"上线评审","eventType":1,"quadrant":1,"priority":3,"isAllDay":0,"remindMinutes":60},{"title":"线上验证","eventType":1,"quadrant":1,"priority":3,"isAllDay":0,"remindMinutes":30}],"sub_plans":[{"plan_name":"Bug 修复","priority":3,"duration_days":2,"habits":[],"events":[],"sub_plans":[]},{"plan_name":"部署发布","priority":3,"duration_days":1,"habits":[],"events":[{"title":"灰度发布","eventType":1,"quadrant":1,"priority":3},{"title":"全量上线","eventType":1,"quadrant":1,"priority":3}],"sub_plans":[]}]}]',
   2, 8
 );
+```
+
+### 预置习惯模板
+
+```sql
+INSERT INTO plan_habit_template (id, template_name, description, name, icon, color, frequency_type, reminder_time, rest_days, target_days, target_value, target_unit, tracking_type, plan_type, visibility, sort) VALUES
+(1, '每日晨跑', '30天晨跑养成', '晨跑', '🏃', '#22b573', 1, '07:00', '0', 30, 5, '公里', 'numeric', 'fitness', 2, 10),
+(2, '每日阅读', '30天阅读习惯', '阅读', '📖', '#6366f1', 1, '22:00', '', 30, 30, '页', 'numeric', 'reading', 2, 10),
+(3, '每日站会', '14天冲刺站会', '每日站会', '🗣️', '#6366f1', 1, '09:00', '0,6', 14, NULL, NULL, 'boolean', 'project', 2, 10),
+(4, '代码Review', '每日代码审查', '代码Review', '🔍', '#a855f7', 1, '17:00', '0,6', 14, NULL, NULL, 'boolean', 'project', 2, 9);
+```
+
+### 预置日程模板
+
+```sql
+INSERT INTO plan_schedule_event_template (id, template_name, description, title, event_type, quadrant, priority, is_repeat, repeat_type, repeat_rule, is_all_day, remind_minutes, plan_type, visibility, sort) VALUES
+(1, '制定周计划', '每周一制定计划', '制定周计划', 1, 2, 2, 1, 2, '{"weekDays":[1]}', 0, 15, NULL, 2, 10),
+(2, '每周复盘', '每周五复盘总结', '复盘总结', 1, 2, 1, 1, 2, '{"weekDays":[5]}', 0, 30, NULL, 2, 10),
+(3, '冲刺启动会', '项目冲刺启动', '冲刺启动会', 1, 1, 3, 0, NULL, NULL, 0, 30, 'project', 2, 10),
+(4, '交付评审', '项目交付评审', '交付评审', 1, 1, 3, 0, NULL, NULL, 0, 60, 'project', 2, 10);
 ```
