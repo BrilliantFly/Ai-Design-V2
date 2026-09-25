@@ -1,0 +1,444 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>矩阵式层级布局设计稿 v3 - 行业模块</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f5f5f5; padding: 24px; }
+  .page-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-tab { padding: 6px 18px; border: 1px solid #d9d9d9; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; color: #555; }
+  .mode-tab.active { background: #1677ff; border-color: #1677ff; color: #fff; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ============ 一级区域主标题(可折叠, 左对齐) ============ */
+  .section-group { margin-bottom: 20px; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .section-title { position: relative; display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 12px 20px; background: #f0f5ff; border-bottom: 1px solid #d6e4ff; cursor: pointer; user-select: none; }
+  .section-title .arrow { font-size: 12px; color: #1677ff; transition: transform .2s; }
+  .section-title .arrow.open { transform: rotate(90deg); }
+  .section-title .name { font-size: 15px; font-weight: 600; color: #003eb3; letter-spacing: 1px; }
+  .section-title .count { position: absolute; right: 20px; font-size: 12px; color: #8c8c8c; }
+  .section-body { display: none; padding: 16px; }
+  .section-body.open { display: block; }
+
+  /* ============ 矩阵表格 ============ */
+  table.matrix { width: 100%; border-collapse: collapse; background: #fff; table-layout: fixed; }
+  table.matrix th, table.matrix td { border: 1px solid #e8e8e8; padding: 0; vertical-align: middle; }
+  /* 层级列(二级起) */
+  td.level2 { width: 12%; background: #d6e4ff; color: #003eb3; text-align: center; vertical-align: middle; font-size: 14px; font-weight: 600; }
+  td.level3 { width: 13%; background: #fafafa; color: #555; text-align: center; vertical-align: middle; font-size: 13px; }
+  td.level4 { width: 15%; background: #fffbe6; color: #874d00; text-align: center; vertical-align: middle; font-size: 13px; }
+  td.level5 { width: 15%; background: #fcfcfc; color: #666; text-align: center; vertical-align: middle; font-size: 13px; }
+  /* 占位格(该行无此层级): 保留边框保证网格完整, 背景与所属层级列一致, 内容为空 */
+  td.level-empty, table.matrix td.level-empty { border: 1px solid #e8e8e8; background: #fffbe6; }
+  /* 内容列 */
+  td.content { padding: 0; }
+  td.content .field-row { display: flex; align-items: center; min-height: 48px; padding: 6px 12px; border-bottom: 1px dashed #f0f0f0; gap: 16px; }
+  td.content .field-row:last-child { border-bottom: none; }
+  td.content .field-pair { display: flex; gap: 16px; flex: 1; }
+  td.content .field-cell { flex: 1; min-width: 0; display: flex; align-items: center; gap: 16px; }
+  td.content .row-label { flex-shrink: 0; width: 120px; text-align: right; color: rgba(0,0,0,.65); font-size: 13px; }
+  td.content .row-value { flex: 1; text-align: center; color: rgba(0,0,0,.88); font-size: 13px; word-break: break-all; }
+  /* 表单模式控件: 统一固定宽度, input 与 textarea 等宽, 不随行列伸缩 */
+  td.content .box { width: 220px; flex: 0 0 auto; border: 1px solid #d9d9d9; border-radius: 6px; height: 32px; padding: 0 11px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; background: #fff; }
+  td.content .box.textarea { height: 72px; align-items: center; justify-content: center; padding: 6px 11px; line-height: 1.6; text-align: center; }
+  td.content .box.select { justify-content: space-between; }
+  td.content .box.select::after { content: "▾"; color: #bbb; }
+  .note { margin-top: 16px; font-size: 13px; color: #999; line-height: 1.8; }
+</style>
+</head>
+<body>
+  <div class="page-title">矩阵式层级布局 · 设计稿 v3（行业模块示例）</div>
+  <div class="page-sub">一级区域 = 可折叠主标题（左对齐，带展开箭头与数量）；区域内二级及以下 = Excel 合并单元格矩阵（二级标题带背景色，占位格保留边框保证网格完整）</div>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="detail" onclick="switchMode('detail')">详情模式</div>
+    <div class="mode-tab" data-mode="form" onclick="switchMode('form')">表单模式</div>
+  </div>
+
+  <!-- ================= 详情模式 ================= -->
+  <div class="panel active" id="panel-detail">
+
+    <!-- 基础信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">基础信息</span><span class="count">共 14 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <!-- 行业定义与技术 (level2, 5 物理行: 名称+代码 / 标签+可见性 / 排序 / 定义 / 技术) -->
+            <tr>
+              <td class="level2" rowspan="5">行业定义<br>与技术</td>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">行业名称</span><span class="row-value">互联网/IT</span></div>
+                    <div class="field-cell"><span class="row-label">行业代码</span><span class="row-value">IT</span></div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">标签</span><span class="row-value">数字化、云计算</span></div>
+                    <div class="field-cell"><span class="row-label">可见性</span><span class="row-value">可见</span></div>
+                  </div>
+                </div>
+                <div class="field-row"><span class="row-label">排序</span><span class="row-value">1</span></div>
+                <div class="field-row"><span class="row-label">行业定义</span><span class="row-value">以互联网、云计算、大数据、人工智能为核心的信息技术服务产业。</span></div>
+                <div class="field-row"><span class="row-label">技术</span><span class="row-value">云计算、大数据、AI、微服务架构等。</span></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="matrix" style="margin-top: 16px;">
+          <tbody>
+            <!-- 上下游产业链: level2 合并4行; level3 = 上/中/下游; level4 = 渠道/营销(仅下游行) -->
+            <tr>
+              <td class="level2" rowspan="4">上下游<br>产业链</td>
+              <td class="level3">上游<br>（原材料）</td>
+              <td class="level-empty">&nbsp;</td>
+              <td class="content"><div class="field-row"><span class="row-label">上游产业链</span><span class="row-value">芯片、服务器、数据库、网络设备等。</span></div></td>
+            </tr>
+            <tr>
+              <td class="level3">中游<br>（产品制造商）</td>
+              <td class="level-empty">&nbsp;</td>
+              <td class="content"><div class="field-row"><span class="row-label">中游产业链</span><span class="row-value">设备制造商、云厂商、SaaS 服务商等。</span></div></td>
+            </tr>
+            <tr>
+              <td class="level3" rowspan="2">下游<br>（销售渠道、营销）</td>
+              <td class="level4">渠道</td>
+              <td class="content"><div class="field-row"><span class="row-label">下游渠道</span><span class="row-value">直销、代理商、线上平台等。</span></div></td>
+            </tr>
+            <tr>
+              <td class="level4">营销</td>
+              <td class="content"><div class="field-row"><span class="row-label">下游营销</span><span class="row-value">广告投放、行业展会、内容营销等。</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="matrix" style="margin-top: 16px;">
+          <tbody>
+            <!-- 行业发展概况 (level2, 2 物理行: 概述 / 规模+潜力) -->
+            <tr>
+              <td class="level2" rowspan="2">行业发展<br>概况</td>
+              <td class="content"><div class="field-row"><span class="row-label">发展概述</span><span class="row-value">数字化转型驱动，行业保持快速增长。</span></div></td>
+            </tr>
+            <tr>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">市场规模</span><span class="row-value">万亿级市场，年复合增长率 15%</span></div>
+                    <div class="field-cell"><span class="row-label">增长潜力</span><span class="row-value">AI 应用、量子计算等新兴方向</span></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 动态信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">动态信息</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">动态信息</td>
+              <td class="content"><div class="field-row"><span class="row-label">动态信息（政策/文化/行业/市场变化及影响）</span><span class="row-value">近期出台数据安全法，行业合规要求提升。</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 价值信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">价值信息</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">价值信息<br>（价值创造）</td>
+              <td class="content"><div class="field-row"><span class="row-label">价值信息（行业价值/大客户需求点）</span><span class="row-value">市场空间大、技术壁垒高，大客户需求旺盛。</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 行业资源 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">行业资源</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">行业资源</td>
+              <td class="content"><div class="field-row"><span class="row-label">行业资源（关键资源/渠道/资质）</span><span class="row-value">行业协会关系、头部客户案例、行业认证资质等。</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 如何把握 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">如何把握</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">如何把握</td>
+              <td class="content"><div class="field-row"><span class="row-label">如何把握（识别/切入点/方法）</span><span class="row-value">细分市场切入，聚焦头部客户解决方案。</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 其他: 财务指标 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">其他</span><span class="count">共 4 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2" rowspan="2">财务指标</td>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">毛利额</span><span class="row-value">1,200,000</span></div>
+                    <div class="field-cell"><span class="row-label">毛利率(%)</span><span class="row-value">35.5%</span></div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">净利额</span><span class="row-value">800,000</span></div>
+                    <div class="field-cell"><span class="row-label">净利率(%)</span><span class="row-value">23.2%</span></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 表单模式 ================= -->
+  <div class="panel" id="panel-form">
+    <!-- 基础信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">基础信息</span><span class="count">共 14 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2" rowspan="5">行业定义<br>与技术</td>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">行业名称</span><div class="box">请输入行业名称</div></div>
+                    <div class="field-cell"><span class="row-label">行业代码</span><div class="box">请输入行业代码</div></div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">标签</span><div class="box">多个标签用逗号分隔</div></div>
+                    <div class="field-cell"><span class="row-label">可见性</span><div class="box select">可见</div></div>
+                  </div>
+                </div>
+                <div class="field-row"><span class="row-label">排序</span><div class="box">请输入排序</div></div>
+                <div class="field-row"><span class="row-label">行业定义</span><div class="box textarea">请输入行业定义内容…</div></div>
+                <div class="field-row"><span class="row-label">技术</span><div class="box textarea">请输入技术内容…</div></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="matrix" style="margin-top: 16px;">
+          <tbody>
+            <tr>
+              <td class="level2" rowspan="4">上下游<br>产业链</td>
+              <td class="level3">上游<br>（原材料）</td>
+              <td class="level-empty">&nbsp;</td>
+              <td class="content"><div class="field-row"><span class="row-label">上游产业链</span><div class="box textarea">请输入上游产业链内容…</div></div></td>
+            </tr>
+            <tr>
+              <td class="level3">中游<br>（产品制造商）</td>
+              <td class="level-empty">&nbsp;</td>
+              <td class="content"><div class="field-row"><span class="row-label">中游产业链</span><div class="box textarea">请输入中游产业链内容…</div></div></td>
+            </tr>
+            <tr>
+              <td class="level3" rowspan="2">下游<br>（销售渠道、营销）</td>
+              <td class="level4">渠道</td>
+              <td class="content"><div class="field-row"><span class="row-label">下游渠道</span><div class="box textarea">请输入下游渠道内容…</div></div></td>
+            </tr>
+            <tr>
+              <td class="level4">营销</td>
+              <td class="content"><div class="field-row"><span class="row-label">下游营销</span><div class="box textarea">请输入下游营销内容…</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="matrix" style="margin-top: 16px;">
+          <tbody>
+            <tr>
+              <td class="level2" rowspan="2">行业发展<br>概况</td>
+              <td class="content"><div class="field-row"><span class="row-label">发展概述</span><div class="box textarea">请输入发展概述…</div></div></td>
+            </tr>
+            <tr>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">市场规模</span><div class="box">请输入市场规模</div></div>
+                    <div class="field-cell"><span class="row-label">增长潜力</span><div class="box">请输入增长潜力</div></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 动态信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">动态信息</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">动态信息</td>
+              <td class="content"><div class="field-row"><span class="row-label">动态信息（政策/文化/行业/市场变化及影响）</span><div class="box textarea">请输入动态信息…</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 价值信息 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">价值信息</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">价值信息<br>（价值创造）</td>
+              <td class="content"><div class="field-row"><span class="row-label">价值信息（行业价值/大客户需求点）</span><div class="box textarea">请输入价值信息…</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 行业资源 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">行业资源</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">行业资源</td>
+              <td class="content"><div class="field-row"><span class="row-label">行业资源（关键资源/渠道/资质）</span><div class="box textarea">请输入行业资源…</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 如何把握 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">如何把握</span><span class="count">共 1 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2">如何把握</td>
+              <td class="content"><div class="field-row"><span class="row-label">如何把握（识别/切入点/方法）</span><div class="box textarea">请输入如何把握…</div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 其他: 财务指标 -->
+    <div class="section-group">
+      <div class="section-title" onclick="toggleGroup(this)">
+        <span class="arrow open">▶</span><span class="name">其他</span><span class="count">共 4 项</span>
+      </div>
+      <div class="section-body open">
+        <table class="matrix">
+          <tbody>
+            <tr>
+              <td class="level2" rowspan="2">财务指标</td>
+              <td class="content">
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">毛利额</span><div class="box">请输入毛利额</div></div>
+                    <div class="field-cell"><span class="row-label">毛利率(%)</span><div class="box">请输入毛利率</div></div>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-pair">
+                    <div class="field-cell"><span class="row-label">净利额</span><div class="box">请输入净利额</div></div>
+                    <div class="field-cell"><span class="row-label">净利率(%)</span><div class="box">请输入净利率</div></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    说明：<br>
+    · 一级区域（基础信息/动态信息/…）作为可折叠主标题，**左对齐**（箭头+标题+右侧数量），不占表格列。<br>
+    · 层级列从二级开始：列数 = 该一级区域内出现的最大层级深度；某个子区域没有更深层级时，其对应层级以保留边框的占位格呈现（内容为空，保证表格网格完整）。<br>
+    · 短字段（span=12）同排并排显示；长字段/文本域（span=24）独占一行。<br>
+    · 详情模式 = 左侧标签 + 右侧值；表单模式 = 左侧标签 + 右侧输入控件。
+  </div>
+
+<script>
+  function switchMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + mode));
+  }
+  function toggleGroup(el) {
+    const arrow = el.querySelector('.arrow');
+    const body = el.nextElementSibling;
+    arrow.classList.toggle('open');
+    body.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
