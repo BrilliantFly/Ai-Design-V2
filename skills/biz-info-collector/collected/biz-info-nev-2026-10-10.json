@@ -1,0 +1,187 @@
+{
+  "meta": {
+    "topic": "新能源汽车行业调研",
+    "scope": "中国 · 2025-2026（含出口）",
+    "collectedAt": "2026-10-10",
+    "collector": "ai",
+    "sourcesSummary": "新浪汽车 / 汽车之家车家号 / 腾讯新闻 / 雪球 / 今日头条 / 有驾 / 证券时报 / SNE Research / 原创力文档",
+    "note": "本次为「行业」demo：客户类对象未采集（无对应公开客户主体）。"
+  },
+  "industry": [
+    {
+      "industry_name": "新能源汽车",
+      "definition": "以新型能源驱动 + 技术先进性为核心、采用非常规车用能源的汽车，主要包括纯电动(BEV)、插电式混动(PHEV，含增程)、燃料电池(FCEV)；普通油电混动(HEV)因不能外接充电不再归入新能源汽车范畴。",
+      "technology": "三大核心技术（三电）：电池、电机、电控；另含热管理、轻量化与电路系统等。",
+      "tags": "新能源汽车,纯电,插混,三电,动力电池,以旧换新",
+      "upstream_chain": "上游：锂/钴/镍等关键矿产、正极/负极材料、隔膜、电解液等电池材料。",
+      "midstream_chain": "中游：动力电池、电机、电控、热管理、轻量化与电路系统；整车制造。",
+      "downstream_channel": "下游：整车销售、充换电服务、汽车金融/后市场、出口。",
+      "downstream_marketing": "直营+经销（4S/商超店）、线上直播与内容营销、以旧换新与价格促销。",
+      "development_overview": "连续 11 年位居全球首位。2025 年产销双双突破 1600 万辆、同比增超 25%，国内新车市场渗透率达 50.8%；2026 年预计销量（含出口）约 2000 万辆、渗透率升至 57%、保有量突破 6000 万辆。",
+      "market_size": "2025 年产销突破 1600 万辆（国内渗透率 50.8%）；2026 年预计销量（含出口）达 2000 万辆。",
+      "growth_potential": "2025 年同比增超 25%，渗透率四年翻 3 倍；2026 年渗透率预计升至 57%。",
+      "dynamic_info": "2026 年新能源汽车购置税由全额免征改为减半征收、免税门槛提高；以旧换新补贴由定额改为按新车价格比例；价格战、智能化（智驾）与出海成为主线。",
+      "value_info": "燃油车替代大周期叠加出口高增长，产业链景气度高。",
+      "industry_resources": "三电核心技术、锂等关键矿产、动力电池产能、整车产销规模与品牌。",
+      "strategy": "整车端拼规模、智驾与出海；产业链端卡位动力电池与关键材料；把握以旧换新与出口政策窗口。",
+      "visibility": 1,
+      "sort": 0,
+      "_relations": {
+        "products": ["纯电动汽车(BEV)", "插电式混动/增程(PHEV/EREV)", "动力电池"],
+        "enterprises": ["比亚迪", "特斯拉", "宁德时代", "吉利汽车", "小米汽车"],
+        "markets": ["新能源汽车市场/商业模式"],
+        "parent": ""
+      },
+      "_sources": [
+        "https://www.yoojia.com/article/9497693092553564012.html",
+        "https://www.yoojia.com/dongtai/1401745002",
+        "https://www.yoojia.com/dongtai/2669334002",
+        "https://xueqiu.com/7842369805/380844833",
+        "https://www.toutiao.com/article/7589868368946938402/",
+        "https://xueqiu.com/9293305171/399308720",
+        "https://news.qq.com/rain/a/20251230V07Y7U00",
+        "https://www.zlketang.com/kjsc/policy_detail_78582.html"
+      ],
+      "_notes": {
+        "definition": "分类口径来自有驾科普与行业定义整理。",
+        "market_size": "部分旧报告仍写「500 万辆/渗透率 20%」，与 2025 官方/协会口径（1600 万辆/50.8%）差异大，判为过时数据，未采用。",
+        "growth_potential": "渗透率「四年翻 3 倍」为雪球研报表述。",
+        "value_info": "分析性结论（推断）。",
+        "strategy": "分析性结论（推断）。"
+      },
+      "_confidence": 0.75
+    }
+  ],
+  "industry_product": [
+    {
+      "product_name": "纯电动汽车(BEV)",
+      "product_concept": "完全由车载动力电池供电、以电动机驱动的汽车，无内燃机。",
+      "category": "整车类型",
+      "consumer_insight": "用车成本低、加速与静谧性好；主要顾虑为续航与补能。",
+      "life_cycle": "成长期",
+      "downstream_channel": "个人消费者、网约车/出租、企业与政府车队。",
+      "_relations": { "industry": "新能源汽车" },
+      "_sources": ["https://www.yoojia.com/article/9497693092553564012.html"],
+      "_notes": { "consumer_insight": "推断", "life_cycle": "推断" },
+      "_confidence": 0.6
+    },
+    {
+      "product_name": "插电式混动/增程(PHEV/EREV)",
+      "product_concept": "可外接充电、兼具电动机与内燃机的车型；增程以电机直驱、发动机发电为主。",
+      "category": "整车类型",
+      "consumer_insight": "可油可电，缓解续航焦虑，适合充电条件有限的用户。",
+      "life_cycle": "成长期",
+      "_relations": { "industry": "新能源汽车" },
+      "_sources": ["https://www.yoojia.com/article/9497693092553564012.html"],
+      "_notes": { "life_cycle": "推断" },
+      "_confidence": 0.6
+    },
+    {
+      "product_name": "动力电池",
+      "product_concept": "新能源汽车的核心能量存储部件（以锂离子电池为主），是整车成本占比最高的部件之一。",
+      "category": "核心零部件 / 中游",
+      "life_cycle": "成长期",
+      "midstream_chain": "中游：动力电池制造（含磷酸铁锂、三元等路线）。",
+      "_relations": { "industry": "新能源汽车" },
+      "_sources": ["https://www.yoojia.com/dongtai/2669334002", "http://k.sina.com.cn/article_7879848900_1d5acf3c401902vvky.html"],
+      "_notes": { "life_cycle": "推断" },
+      "_confidence": 0.6
+    }
+  ],
+  "industry_enterprise": [
+    {
+      "enterprise_name": "比亚迪",
+      "enterprise_type": "生产商",
+      "established_date": "",
+      "main_business": "新能源汽车整车（纯电+插混）、动力电池与电子。",
+      "market_performance": "2025 年全年销量 460.2 万辆，首次跻身全球车企集团销量前五（超越通用、福特、本田、日产），连续 4 年全球新能源汽车销量冠军；2025 年海外销量超 104.9 万辆，同比 +145%；2025 年纯电销量 166 万辆，同比 +18.5%。",
+      "_relations": { "industries": ["新能源汽车"], "products": ["纯电动汽车(BEV)", "插电式混动/增程(PHEV/EREV)", "动力电池"] },
+      "_sources": [
+        "https://k.sina.com.cn/article_2334162530_8b207e6204001lo8e.html",
+        "https://chejiahao.autohome.com.cn/info/24819362",
+        "https://xueqiu.com/4008049874/374851190",
+        "https://news.qq.com/rain/a/20260105A04U9P00"
+      ],
+      "_confidence": 0.8
+    },
+    {
+      "enterprise_name": "特斯拉",
+      "enterprise_type": "生产商",
+      "main_business": "纯电动汽车整车。",
+      "market_performance": "2025 年全球纯电销量 60.7 万辆，同比 -8.4%，被比亚迪反超。",
+      "_relations": { "industries": ["新能源汽车"], "products": ["纯电动汽车(BEV)"] },
+      "_sources": ["https://news.qq.com/rain/a/20260105A04U9P00"],
+      "_confidence": 0.65
+    },
+    {
+      "enterprise_name": "宁德时代",
+      "enterprise_type": "生产商",
+      "main_business": "动力电池与储能电池。",
+      "market_performance": "据 SNE Research，2025 年全球动力电池使用量市占率提升 1.2 个百分点至 39.2%，连续 9 年全球第一；2025 年营收 4237.02 亿元（+17.04%），净利润 722.01 亿元（+42.28%）。",
+      "_relations": { "industries": ["新能源汽车"], "products": ["动力电池"] },
+      "_sources": [
+        "http://k.sina.com.cn/article_7879848900_1d5acf3c401902vvky.html",
+        "https://www.stcn.com/live/video-detail/21169.html",
+        "https://xueqiu.com/2303628027/387705869"
+      ],
+      "_confidence": 0.8
+    },
+    {
+      "enterprise_name": "吉利汽车",
+      "enterprise_type": "生产商",
+      "main_business": "新能源汽车整车（传统车企转型代表）。",
+      "market_performance": "位列 2025 年新能源汽车十大销量品牌。",
+      "_relations": { "industries": ["新能源汽车"] },
+      "_sources": ["https://k.sina.com.cn/article_7857141524_1d452771401901njzq.html"],
+      "_confidence": 0.55
+    },
+    {
+      "enterprise_name": "小米汽车",
+      "enterprise_type": "生产商",
+      "main_business": "新能源汽车整车（新势力）。",
+      "market_performance": "位列 2025 年新能源汽车十大销量品牌。",
+      "_relations": { "industries": ["新能源汽车"] },
+      "_sources": ["https://k.sina.com.cn/article_7857141524_1d452771401901njzq.html"],
+      "_confidence": 0.55
+    }
+  ],
+  "industry_market": [
+    {
+      "demand": "燃油车替代叠加双碳目标，需求由政策驱动转向市场驱动；2025 年国内新车渗透率达 50.8%，产销突破 1600 万辆。",
+      "value_proposition": "更低的用车成本（电费/能耗）、更好的智能化体验与环保价值。",
+      "opportunity": "燃油车存量置换、下沉市场与出口市场；比亚迪 2025 年海外销量超 104.9 万辆、同比 +145%。",
+      "customer_segment": "个人消费者、网约车/出租车、企业与政府车队。",
+      "channel": "直营 + 经销（4S 店/商超店）、线上直播与内容营销。",
+      "customer_relation": "直营品牌以用户社区与 OTA 持续运营；经销体系依赖 4S 网络。",
+      "revenue_source": "整车销售为主；充换电服务费、软件/服务订阅、汽车金融与后市场为补充。",
+      "key_resource": "三电技术、动力电池供应、产能规模、品牌与渠道。",
+      "key_partner": "动力电池厂商（宁德时代等）、零部件/材料供应商、充电运营商。",
+      "key_activity": "整车研发制造、渠道与营销、充换电网络建设、出口。",
+      "cost_structure": "电池/供应链成本占比高（电池为主要成本项），靠规模效应与垂直整合降本。",
+      "competition_method": "价格战 + 智能化（智驾）+ 出海；头部集中，比亚迪全球份额超 20%。",
+      "promo_channel": "线上直播/新媒体 + 线下商超店/车展 + 以旧换新补贴。",
+      "value_distribution": "利润向电池环节（宁德时代高净利）与头部整车集中，中小车企承压。",
+      "dynamic_info": "2026 年购置税减半征收、门槛提高；以旧换新改为按新车价格比例补贴；价格战与智驾竞争加剧。",
+      "value_info": "替代燃油车大周期 + 出口高增长，龙头与电池环节确定性更强。",
+      "strategy": "头部拼规模、智驾与出海；产业链卡位电池与关键材料。",
+      "_relations": { "industry": "新能源汽车" },
+      "_sources": [
+        "https://xueqiu.com/7842369805/380844833",
+        "https://www.toutiao.com/article/7589868368946938402/",
+        "https://news.qq.com/rain/a/20251230V07Y7U00",
+        "https://www.zlketang.com/kjsc/policy_detail_78582.html",
+        "https://max.book118.com/html/2026/0922/6203234104012224.shtm",
+        "https://max.book118.com/html/2025/1217/7021162042011025.shtm"
+      ],
+      "_notes": {
+        "value_distribution": "分析性结论（推断）。",
+        "strategy": "分析性结论（推断）。",
+        "revenue_source": "换电/服务费收入参考换电商业模式报告。"
+      },
+      "_confidence": 0.6
+    }
+  ],
+  "customer": [],
+  "customer_company": [],
+  "customer_profile": []
+}

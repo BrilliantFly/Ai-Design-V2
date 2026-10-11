@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "topic": "<调研主题，如：AI 行业调研>",
+    "scope": "<范围，如：中国 · 2024-2026>",
+    "collectedAt": "YYYY-MM-DD",
+    "collector": "ai",
+    "sourcesSummary": "<来源类型概述>"
+  },
+  "industry": [
+    {
+      "industry_name": "<行业名称>",
+      "definition": "<行业定义>",
+      "technology": "<核心技术>",
+      "market_size": "<规模，带年份与来源>",
+      "growth_potential": "<增速>",
+      "development_overview": "<概况>",
+      "_relations": {
+        "parent": "<上级行业>",
+        "products": ["<产品名>"],
+        "enterprises": ["<企业名>"],
+        "markets": ["<市场/商业模式要点>"]
+      },
+      "_sources": ["https://<来源URL>"],
+      "_notes": {
+        "market_size": "<口径差异说明>"
+      },
+      "_confidence": 0.8
+    }
+  ],
+  "industry_product": [],
+  "industry_enterprise": [],
+  "industry_market": [],
+  "customer": [],
+  "customer_company": [],
+  "customer_profile": []
+}

@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "topic": "AI 行业调研（人工智能）",
+    "scope": "中国 · 2023-2026",
+    "collectedAt": "2026-10-10",
+    "collector": "ai",
+    "sourcesSummary": "赛迪顾问 / 中商产业研究院 / 中国信通院 / 前瞻产业研究院 / 36氪 / 雪球 / 东方财报 / 同花顺 / 胡润研究院 / 南方财富网",
+    "note": "本次为「行业」demo：客户/客户企业/画像 未采集（AI 行业无对应公开客户对象）。"
+  },
+  "industry": [
+    {
+      "industry_name": "人工智能",
+      "definition": "以机器学习/深度学习为核心，研究、开发用于模拟、延伸和扩展人的智能的理论、方法、技术及应用系统的技术科学；按技术路线分为符号主义（逻辑推理）、连接主义（神经网络）、行为主义（强化学习）。",
+      "technology": "机器学习、深度学习、计算机视觉、自然语言处理(NLP)、语音识别；三大技术路线：符号主义 / 连接主义 / 行为主义。",
+      "tags": "AI,大模型,机器学习,深度学习,人工智能+",
+      "upstream_chain": "基础层：传感器、AI 芯片(GPU/ASIC)、云计算、AI 基础数据服务。",
+      "midstream_chain": "技术层：机器学习、计算机视觉、自然语言处理、语音识别；大模型与软件（AI 大脑）。",
+      "downstream_channel": "应用层：智能驾驶、智能制造、智慧医疗、AI 应用等。",
+      "downstream_marketing": "线上多渠道数字营销、AI 精准营销与客户画像。",
+      "development_overview": "产业正从概念验证走向规模化落地。2025-08 国务院印发《关于深入实施「人工智能+」行动的意见》(国发〔2025〕11号)，推动 AI 与经济社会各领域深度融合，明确未来 10 年发展目标。",
+      "market_size": "赛迪顾问预测 2026 年中国 AI 市场规模接近 6000 亿元（2026-01）；中商产业研究院预测 2026 年达 12534 亿元；英伟达 CEO 黄仁勋预计 2026 年中国 AI 市场达 500 亿美元。",
+      "growth_potential": "中国信通院：2025 年 AI 核心产业规模有望突破万亿元；另有报道称 2025 年中国 AI 产业规模超 9 千亿元、增速 25.7%；2026-10 有报道称核心产业规模突破 1.2 万亿元。",
+      "dynamic_info": "政策端「人工智能+」行动与「十五五」规划持续深化数智化；行业竞争从「技术性能单维比拼」转向「生态与商业化落地」。",
+      "value_info": "AI 被定位为新质生产力核心引擎，带动算力、模型、应用全链条机会。",
+      "industry_resources": "算力（芯片/云）、高质量数据、算法与人才、行业落地场景。",
+      "strategy": "沿「基础层—技术层—应用层」布局，把握「人工智能+」行业渗透与国产算力替代两条主线。",
+      "visibility": 1,
+      "sort": 0,
+      "_relations": {
+        "products": ["大模型平台", "AI 芯片(GPU/ASIC)", "智能驾驶解决方案"],
+        "enterprises": ["寒武纪", "科大讯飞", "摩尔线程", "浪潮信息", "海光信息"],
+        "markets": ["AI 行业市场/商业模式"],
+        "parent": ""
+      },
+      "_sources": [
+        "https://developer.baidu.com/article/detail.html?id=6541673",
+        "https://www.cnblogs.com/blfbuaa/p/19173516",
+        "https://y.qianzhan.com/chanye/detail/d439599e.html",
+        "https://xueqiu.com/7842369805/372336040",
+        "http://www.seccw.cn/Document/detail/id/40627.html",
+        "https://www.36kr.com/newsflashes/3301705284229890",
+        "http://cn.chinadaily.com.cn/a/202512/15/WS693f48dfa310942cc499695a.html",
+        "http://dfcaibao.com/xinwen/21229.html",
+        "http://news.10jqka.com.cn/20261009/c680496823.shtml",
+        "https://xueqiu.com/2200732749/355678903"
+      ],
+      "_notes": {
+        "market_size": "各家口径差异极大（核心产业 vs 整体产业；亿元 vs 美元），未取单一值，全部列出来源。",
+        "growth_potential": "信通院「破万亿」与部分报道「突破 1.2 万亿」口径/时点不同。",
+        "value_info": "分析性结论（推断），依据政策定位与规模数据。",
+        "strategy": "分析性结论（推断）。"
+      },
+      "_confidence": 0.75
+    }
+  ],
+  "industry_product": [
+    {
+      "product_name": "大模型平台",
+      "product_concept": "基于海量参数与自监督预训练、具备通用任务泛化能力的 AI 基础模型（如大语言模型）。",
+      "category": "AI 基础模型 / 软件",
+      "consumer_insight": "企业希望以更低门槛获得通用智能能力，用于对话、生成、推理等场景。",
+      "life_cycle": "成长期",
+      "midstream_chain": "技术层：大模型研发与训练。",
+      "dynamic_info": "开源生态活跃，模型能力快速迭代。",
+      "_relations": { "industry": "人工智能" },
+      "_sources": ["https://m.maigoo.com/news/744521.html", "https://xueqiu.com/3862178939/371928030"],
+      "_notes": { "consumer_insight": "推断", "life_cycle": "推断" },
+      "_confidence": 0.6
+    },
+    {
+      "product_name": "AI 芯片(GPU/ASIC)",
+      "product_concept": "面向 AI 训练与推理的算力芯片，构成 AI 产业的算力底座。",
+      "category": "算力硬件 / 基础层",
+      "upstream_chain": "上游：晶圆制造、封装测试、EDA/IP。",
+      "life_cycle": "成长期",
+      "dynamic_info": "上游材料（MLCC、铜箔、功率半导体等）随 AI 需求出现涨价与需求双驱动。",
+      "_relations": { "industry": "人工智能" },
+      "_sources": ["https://y.qianzhan.com/chanye/detail/d439599e.html", "https://xueqiu.com/4851232970/399532088"],
+      "_notes": { "life_cycle": "推断" },
+      "_confidence": 0.65
+    },
+    {
+      "product_name": "智能驾驶解决方案",
+      "product_concept": "面向智能驾驶场景的 AI 软硬件一体化解决方案。",
+      "category": "应用层",
+      "downstream_channel": "车企、Tier1、出行平台。",
+      "_relations": { "industry": "人工智能" },
+      "_sources": ["https://y.qianzhan.com/chanye/detail/d439599e.html"],
+      "_confidence": 0.55
+    }
+  ],
+  "industry_enterprise": [
+    {
+      "enterprise_name": "寒武纪",
+      "enterprise_type": "生产商",
+      "main_business": "AI 芯片（AI 算力芯片/加速卡）。",
+      "market_performance": "位列《2025 胡润中国人工智能企业 50 强》第 1 名（按企业价值）。",
+      "_relations": { "industries": ["人工智能"], "products": ["AI 芯片(GPU/ASIC)"] },
+      "_sources": ["https://m.maigoo.com/news/744521.html", "https://xueqiu.com/3862178939/371928030"],
+      "_confidence": 0.7
+    },
+    {
+      "enterprise_name": "摩尔线程",
+      "enterprise_type": "生产商",
+      "main_business": "GPU 芯片。",
+      "market_performance": "位列《2025 胡润中国人工智能企业 50 强》第 2 名。",
+      "_relations": { "industries": ["人工智能"], "products": ["AI 芯片(GPU/ASIC)"] },
+      "_sources": ["https://m.maigoo.com/news/744521.html", "https://xueqiu.com/3862178939/371928030"],
+      "_confidence": 0.65
+    },
+    {
+      "enterprise_name": "科大讯飞",
+      "enterprise_type": "平台,生产商",
+      "main_business": "智能语音、大模型。",
+      "market_performance": "位列《2025 胡润中国人工智能企业 50 强》。",
+      "_relations": { "industries": ["人工智能"], "products": ["大模型平台"] },
+      "_sources": ["https://m.maigoo.com/news/744521.html", "https://xueqiu.com/3862178939/371928030"],
+      "_confidence": 0.65
+    },
+    {
+      "enterprise_name": "浪潮信息",
+      "enterprise_type": "生产商",
+      "main_business": "AI 服务器（上游算力基础设施）。",
+      "_relations": { "industries": ["人工智能"] },
+      "_sources": ["https://xueqiu.com/4851232970/399532088", "https://weibo.com/1803687135/Rk413nZnt"],
+      "_confidence": 0.55
+    },
+    {
+      "enterprise_name": "海光信息",
+      "enterprise_type": "生产商",
+      "main_business": "CPU / DCU（AI 算力芯片）。",
+      "market_performance": "2025 年第三季度营收 40.26 亿元（同比 +69.6%），净利润 7.6 亿元（同比 +13.04%），毛利润 24.17 亿元，毛利率 60.03%。",
+      "_relations": { "industries": ["人工智能"], "products": ["AI 芯片(GPU/ASIC)"] },
+      "_sources": ["http://southmoney.com/subject/ai/202512/2031235.html"],
+      "_confidence": 0.7
+    }
+  ],
+  "industry_market": [
+    {
+      "demand": "各行业智能化转型需求旺盛；中国信通院预计 2025 年 AI 核心产业规模有望突破万亿元，需求由技术尝鲜转向规模化落地。",
+      "value_proposition": "以「算力+模型+应用」提升各行业生产效率，重塑生产生活范式，形成智能经济与智能社会新形态。",
+      "opportunity": "国务院《关于深入实施「人工智能+」行动的意见》推动 AI 与实体经济深度融合，带来行业渗透机会。",
+      "customer_segment": "政府、金融、制造、医疗、互联网、交通等（ToG/ToB 为主）。",
+      "channel": "云厂商渠道、行业系统集成商、直销与生态伙伴。",
+      "customer_relation": "以行业解决方案交付 + 持续运维/订阅维持客户关系。",
+      "revenue_source": "技术服务与订阅（SaaS 订阅、API 调用）、软硬件一体化、专业服务与生态（行业解决方案/系统集成/咨询）。",
+      "key_resource": "算力、数据、算法与人才。",
+      "key_partner": "芯片厂商、云厂商、行业 ISV/集成商。",
+      "key_activity": "模型研发与训练、行业解决方案交付、算力运营。",
+      "cost_structure": "算力成本 + 研发投入 + 人才成本为主，偏重资产。",
+      "competition_method": "头部科技巨头凭技术、数据与生态优势占据近 80% 市场份额，呈寡头垄断格局。",
+      "promo_channel": "企业级：行业峰会/生态合作；产品级：内容营销、多渠道数字营销与 AI 精准投放。",
+      "value_distribution": "产业链利润向基础层（芯片/云）与技术层（模型）集中，应用层竞争激烈、利润较薄。",
+      "dynamic_info": "竞争从「技术性能单维比拼」转向「生态与商业化落地」；成本压缩与盈利模式创新成为主线。",
+      "value_info": "市场价值集中于基础设施与模型层，应用层机会在垂直场景与数据壁垒。",
+      "strategy": "优先卡位算力/模型基础设施，或以垂直行业数据壁垒切入应用层。",
+      "_relations": { "industry": "人工智能" },
+      "_sources": [
+        "http://cn.chinadaily.com.cn/a/202512/15/WS693f48dfa310942cc499695a.html",
+        "https://xueqiu.com/2200732749/355678903",
+        "https://www.qianzhan.com/analyst/detail/220/250808-db7b5e52.html",
+        "https://www.toutiao.com/article/7626682205570941474/",
+        "https://www.sohu.com/a/663900078_121637599",
+        "http://dfcaibao.com/xinwen/21229.html"
+      ],
+      "_notes": {
+        "value_distribution": "分析性结论（推断）。",
+        "strategy": "分析性结论（推断）。",
+        "competition_method": "前瞻网原文针对「人工智能代理行业」，此处为参考性引用。"
+      },
+      "_confidence": 0.6
+    }
+  ],
+  "customer": [],
+  "customer_company": [],
+  "customer_profile": []
+}

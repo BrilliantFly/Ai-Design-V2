@@ -1,0 +1,255 @@
+{
+  "version": "1.0",
+  "db": "know_boot_v1",
+  "idGen": "snowflake",
+  "note": "采集 JSON → 业务表 INSERT 的映射。字段名与表列名一致；系统字段由脚本统一补（id/create_time/update_time/软删）。",
+  "objects": {
+    "industry": {
+      "table": "biz_industry",
+      "pk": "id",
+      "nameField": "industry_name",
+      "softDelete": "del_flag",
+      "order": 1,
+      "fields": {
+        "industry_name": { "type": "string", "max": 128 },
+        "definition": { "type": "string", "max": 1024 },
+        "technology": { "type": "string", "max": 1024 },
+        "industry_code": { "type": "string", "max": 32 },
+        "tags": { "type": "string", "max": 256 },
+        "upstream_chain": { "type": "string", "max": 1024 },
+        "midstream_chain": { "type": "string", "max": 1024 },
+        "downstream_channel": { "type": "string", "max": 1024 },
+        "downstream_marketing": { "type": "string", "max": 1024 },
+        "development_overview": { "type": "string", "max": 1024 },
+        "market_size": { "type": "string", "max": 128 },
+        "growth_potential": { "type": "string", "max": 128 },
+        "dynamic_info": { "type": "text" },
+        "value_info": { "type": "text" },
+        "industry_resources": { "type": "string", "max": 1024 },
+        "strategy": { "type": "text" },
+        "gross_profit": { "type": "decimal" },
+        "gross_margin": { "type": "decimal" },
+        "net_profit": { "type": "decimal" },
+        "net_margin": { "type": "decimal" },
+        "visibility": { "type": "int" },
+        "sort": { "type": "int" }
+      },
+      "defaults": { "visibility": 1, "sort": 0 },
+      "privacy": [],
+      "parentField": "parent_id",
+      "parentRelation": "parent"
+    },
+    "industry_product": {
+      "table": "biz_industry_product",
+      "nameField": "product_name",
+      "softDelete": "del_flag",
+      "fields": {
+        "category": { "type": "string", "max": 64 },
+        "product_name": { "type": "string", "max": 128 },
+        "product_concept": { "type": "text" },
+        "consumer_insight": { "type": "text" },
+        "benefit_promise": { "type": "string", "max": 512 },
+        "support_point": { "type": "string", "max": 512 },
+        "core_product": { "type": "string", "max": 512 },
+        "basic_product": { "type": "string", "max": 512 },
+        "additional_product": { "type": "string", "max": 512 },
+        "potential_product": { "type": "string", "max": 512 },
+        "life_cycle": { "type": "string", "max": 32 },
+        "upstream_chain": { "type": "string", "max": 1024 },
+        "midstream_chain": { "type": "string", "max": 1024 },
+        "downstream_channel": { "type": "string", "max": 1024 },
+        "downstream_marketing": { "type": "string", "max": 1024 },
+        "dynamic_info": { "type": "text" },
+        "value_info": { "type": "text" },
+        "strategy": { "type": "text" }
+      }
+    },
+    "industry_enterprise": {
+      "table": "biz_industry_enterprise",
+      "nameField": "enterprise_name",
+      "softDelete": "del_flag",
+      "fields": {
+        "enterprise_type": { "type": "string", "max": 32 },
+        "enterprise_name": { "type": "string", "max": 128 },
+        "established_date": { "type": "date" },
+        "registered_capital": { "type": "string", "max": 64 },
+        "paid_capital": { "type": "string", "max": 64 },
+        "scale": { "type": "string", "max": 50 },
+        "insured_count": { "type": "int" },
+        "is_listed": { "type": "int" },
+        "main_business": { "type": "string", "max": 1024 },
+        "core_technology": { "type": "string", "max": 512 },
+        "products": { "type": "string", "max": 1024 },
+        "market_performance": { "type": "string", "max": 1024 },
+        "competitors": { "type": "string", "max": 1024 },
+        "advantage": { "type": "string", "max": 512 },
+        "disadvantage": { "type": "string", "max": 512 },
+        "upstream_chain": { "type": "string", "max": 1024 },
+        "midstream_chain": { "type": "string", "max": 1024 },
+        "downstream_channel": { "type": "string", "max": 1024 },
+        "downstream_marketing": { "type": "string", "max": 1024 },
+        "dynamic_info": { "type": "text" },
+        "value_info": { "type": "text" },
+        "industry_resources": { "type": "string", "max": 1024 },
+        "strategy": { "type": "text" },
+        "address": { "type": "string", "max": 255 },
+        "contact_name": { "type": "string", "max": 64 },
+        "contact_phone": { "type": "string", "max": 128 },
+        "contact_position": { "type": "string", "max": 64 }
+      },
+      "defaults": { "is_listed": 0 }
+    },
+    "industry_market": {
+      "table": "biz_industry_market",
+      "softDelete": "del_flag",
+      "fields": {
+        "demand": { "type": "text" },
+        "opportunity": { "type": "text" },
+        "value_proposition": { "type": "string", "max": 512 },
+        "customer_segment": { "type": "string", "max": 512 },
+        "channel": { "type": "string", "max": 512 },
+        "customer_relation": { "type": "string", "max": 512 },
+        "revenue_source": { "type": "string", "max": 512 },
+        "key_resource": { "type": "string", "max": 512 },
+        "key_partner": { "type": "string", "max": 512 },
+        "key_activity": { "type": "string", "max": 512 },
+        "cost_structure": { "type": "string", "max": 512 },
+        "value_evaluation": { "type": "text" },
+        "value_distribution": { "type": "text" },
+        "competition_method": { "type": "text" },
+        "promo_channel": { "type": "text" },
+        "dynamic_info": { "type": "text" },
+        "value_info": { "type": "text" },
+        "strategy": { "type": "text" },
+        "gross_profit": { "type": "decimal" },
+        "gross_margin": { "type": "decimal" },
+        "net_profit": { "type": "decimal" },
+        "net_margin": { "type": "decimal" }
+      }
+    },
+    "customer": {
+      "table": "biz_customer",
+      "nameField": "name",
+      "softDelete": "deleted",
+      "privacy": ["phone", "email", "family_situation", "marital_status"],
+      "fields": {
+        "name": { "type": "string", "max": 64 },
+        "gender": { "type": "int" },
+        "age": { "type": "int" },
+        "phone": { "type": "string", "max": 128 },
+        "email": { "type": "string", "max": 128 },
+        "address": { "type": "string", "max": 255 },
+        "region_code": { "type": "string", "max": 64 },
+        "education": { "type": "string", "max": 64 },
+        "education_raw": { "type": "string", "max": 255 },
+        "occupation": { "type": "string", "max": 64 },
+        "position": { "type": "string", "max": 64 },
+        "personality": { "type": "string", "max": 255 },
+        "hobby": { "type": "string", "max": 255 },
+        "values_text": { "type": "string", "max": 512 },
+        "lifestyle": { "type": "string", "max": 512 },
+        "marital_status": { "type": "string", "max": 16 },
+        "family_situation": { "type": "string", "max": 512 },
+        "customer_type": { "type": "int" },
+        "status": { "type": "int" },
+        "source": { "type": "string", "max": 64 },
+        "demand_level": { "type": "int" },
+        "value_score": { "type": "int" },
+        "demand_willingness": { "type": "int" },
+        "demand_budget": { "type": "decimal" },
+        "demand_decision": { "type": "string", "max": 64 },
+        "demand_priority": { "type": "int" },
+        "demand_tags": { "type": "string", "max": 255 },
+        "demand_desc": { "type": "string", "max": 512 },
+        "appearance": { "type": "string", "max": 255 },
+        "earning_way": { "type": "string", "max": 255 },
+        "social_class": { "type": "string", "max": 255 },
+        "social_circle": { "type": "string", "max": 255 },
+        "basic_life_skill": { "type": "string", "max": 255 },
+        "vocational_skill": { "type": "string", "max": 255 },
+        "sports_skill": { "type": "string", "max": 255 },
+        "art_skill": { "type": "string", "max": 255 },
+        "tech_skill": { "type": "string", "max": 255 }
+      },
+      "defaults": { "customer_type": 1, "status": 1 }
+    },
+    "customer_company": {
+      "table": "biz_customer_company",
+      "nameField": "name",
+      "softDelete": "deleted",
+      "fields": {
+        "name": { "type": "string", "max": 128 },
+        "industry": { "type": "string", "max": 64 },
+        "scale": { "type": "string", "max": 32 },
+        "business": { "type": "string", "max": 512 },
+        "main_products": { "type": "string", "max": 512 },
+        "established_date": { "type": "date" },
+        "capital": { "type": "string", "max": 64 },
+        "address": { "type": "string", "max": 255 },
+        "market_performance": { "type": "string", "max": 512 },
+        "competitive_advantage": { "type": "string", "max": 512 },
+        "contact_name": { "type": "string", "max": 64 },
+        "contact_phone": { "type": "string", "max": 128 },
+        "contact_position": { "type": "string", "max": 64 }
+      }
+    },
+    "customer_profile": {
+      "table": "biz_customer_profile",
+      "softDelete": "del_flag",
+      "fields": {
+        "dynamic_info": { "type": "text" },
+        "value_level": { "type": "int" },
+        "value_expect": { "type": "string", "max": 512 },
+        "value_interest": { "type": "string", "max": 512 },
+        "strategy": { "type": "string", "max": 1024 },
+        "talk_script": { "type": "text" },
+        "analysis": { "type": "text" }
+      }
+    }
+  },
+  "relations": {
+    "industry_product": {
+      "table": "biz_industry_product_rel",
+      "columns": ["industry_id", "product_id"],
+      "pairs": [
+        { "from": "industry_product", "rel": "industry", "to": "industry", "match": "industry_name", "map": { "product_id": "self", "industry_id": "match" } },
+        { "from": "industry", "rel": "products", "to": "industry_product", "match": "product_name", "map": { "industry_id": "self", "product_id": "match" } }
+      ]
+    },
+    "industry_enterprise": {
+      "table": "biz_industry_enterprise_rel",
+      "columns": ["industry_id", "enterprise_id"],
+      "pairs": [
+        { "from": "industry_enterprise", "rel": "industries", "to": "industry", "match": "industry_name", "map": { "enterprise_id": "self", "industry_id": "match" } },
+        { "from": "industry", "rel": "enterprises", "to": "industry_enterprise", "match": "enterprise_name", "map": { "industry_id": "self", "enterprise_id": "match" } }
+      ]
+    },
+    "industry_market": {
+      "table": "biz_industry_market_rel",
+      "columns": ["industry_id", "market_id"],
+      "pairs": [
+        { "from": "industry_market", "rel": "industry", "to": "industry", "match": "industry_name", "map": { "market_id": "self", "industry_id": "match" } }
+      ]
+    },
+    "enterprise_product": {
+      "table": "biz_enterprise_product_rel",
+      "columns": ["enterprise_id", "product_id"],
+      "pairs": [
+        { "from": "industry_enterprise", "rel": "products", "to": "industry_product", "match": "product_name", "map": { "enterprise_id": "self", "product_id": "match" } }
+      ]
+    },
+    "customer_industry": {
+      "table": "biz_customer_industry",
+      "columns": ["customer_id", "industry_id", "relation_type", "is_main"],
+      "extra": { "relation_type": 1, "is_main": 0 },
+      "pairs": [
+        { "from": "customer", "rel": "industries", "to": "industry", "match": "industry_name", "map": { "customer_id": "self", "industry_id": "match" } }
+      ]
+    }
+  },
+  "foreignKeys": [
+    { "object": "industry", "field": "parent_id", "rel": "parent", "to": "industry", "match": "industry_name" },
+    { "object": "customer", "field": "company_id", "rel": "company", "to": "customer_company", "match": "name" },
+    { "object": "customer_profile", "field": "customer_id", "rel": "customer", "to": "customer", "match": "name" }
+  ]
+}
