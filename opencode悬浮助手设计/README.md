@@ -34,13 +34,14 @@
 
 ## 2. 设计目标
 
-1. **opencode 作为唯一 AI 提供方**：后端封装 opencode HTTP API（`/session`、`/session/:id/message`、`/session/:id/prompt_async`、`/event`、`/api/model`）。
-2. **免费模型优先**：优先使用 OpenCode Zen 内置免费模型（`big-pickle`、`space-bunny-free`、`longcat-2.5-preview-free` 等），按 `cost.input===0 && cost.output===0` 识别并打「免费」标签。
-3. **可配置访问地址**：在「AI 助手设置」页填写 opencode 服务地址（+ 可选 HTTP Basic 鉴权），保存入库，支持**连通性测试**。
-4. **悬浮入口**：`know-vue` 与 `know-uniapp` 均显示**可拖动悬浮图标**，点击展开/收起对话框。
-5. **流式对话**：Web / H5 走 SSE 增量输出（订阅 `/event` 的 `message.part.delta`）；App / 小程序按能力降级为一次性返回。
-6. **会话与历史**：会话、消息本地落库（`ai_` 前缀），支持列表、续聊、清空。
-7. **安全**：密钥/地址经后端保管，前端只持有业务 token；地址做协议/白名单校验，防 SSRF。
+1. **opencode 作为唯一 AI 执行层**：后端封装 opencode HTTP API（`/session`、`/session/:id/message`、`/session/:id/prompt_async`、`/event`、`/api/model`）。
+2. **可配置多 provider 模型库**：除 OpenCode Zen 内置免费模型外，管理员可接入 OpenAI、OpenRouter、Google Gemini、Anthropic、Mistral、Groq、Ollama（本地）及自定义 OpenAI 兼容服务，凭证经后端托管并同步到 opencode（见 [06-模型库配置设计](./06-模型库配置设计.md)）。
+3. **免费模型优先**：默认使用 OpenCode Zen 内置免费模型（`space-bunny-free` 等），按 `cost.input===0 && cost.output===0` 识别并打「免费」标签；管理员可在模型库中启用/禁用任意模型。
+4. **可配置访问地址**：在「AI 助手设置」页填写 opencode 服务地址（+ 可选 HTTP Basic 鉴权），保存入库，支持**连通性测试**。
+5. **悬浮入口**：`know-vue` 与 `know-uniapp` 均显示**可拖动悬浮图标**，点击展开/收起对话框。
+6. **流式对话**：Web / H5 走 SSE 增量输出（订阅 `/event` 的 `message.part.delta`）；App / 小程序按能力降级为一次性返回。
+7. **会话与历史**：会话、消息本地落库（`ai_` 前缀），支持列表、续聊、清空。
+8. **安全**：密钥/地址经后端保管，前端只持有业务 token；地址做协议/白名单校验，防 SSRF。
 
 ---
 
