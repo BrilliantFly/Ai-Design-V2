@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件导入 - UniApp 原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: #F8FAF9;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .phone {
+            width: 375px;
+            min-height: 812px;
+            background: #F8FAF9;
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            overflow: hidden;
+            position: relative;
+        }
+        .nav {
+            height: 56px;
+            background: #fff;
+            border-bottom: 1px solid #DEE0E3;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+        }
+        .back { font-size: 28px; color: #1F2329; cursor: pointer; }
+        .nav-title { font-size: 17px; font-weight: 600; color: #1F2329; }
+        .content { padding: 16px; }
+
+        .kb-selector {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #DEE0E3;
+        }
+        .kb-label { font-size: 13px; color: #646A73; }
+        .kb-value { font-size: 15px; font-weight: 600; color: #1F2329; }
+        .kb-arrow { color: #8F959E; font-size: 14px; }
+
+        .dropzone {
+            background: #fff;
+            border: 2px dashed #25B864;
+            border-radius: 16px;
+            padding: 40px 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .dropzone:hover { background: #E8F8EF; }
+        .dz-icon { font-size: 48px; margin-bottom: 12px; }
+        .dz-title { font-size: 17px; font-weight: 600; color: #1F2329; margin-bottom: 6px; }
+        .dz-desc { font-size: 13px; color: #646A73; line-height: 1.6; }
+        .dz-ext {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #E8F8EF;
+            color: #25B864;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .file-list { margin-bottom: 20px; }
+        .file-list-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1F2329;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list-clear { font-size: 12px; color: #F54A45; font-weight: normal; cursor: pointer; }
+
+        .file-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #DEE0E3;
+        }
+        .file-icon { font-size: 28px; width: 40px; text-align: center; }
+        .file-info { flex: 1; min-width: 0; }
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1F2329;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .file-meta { font-size: 12px; color: #8F959E; margin-top: 2px; }
+        .status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .status-pending { background: #F1F5F2; color: #646A73; }
+        .status-uploading { background: #FFF3E0; color: #E67E22; }
+        .status-success { background: #E8F8EF; color: #25B864; }
+        .status-error { background: #FFEBEE; color: #F54A45; }
+
+        .recent-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1F2329;
+            margin-bottom: 10px;
+        }
+        .recent-item {
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border: 1px solid #DEE0E3;
+        }
+        .recent-item:hover { background: #F1F5F2; }
+        .recent-name {
+            font-size: 13px;
+            color: #1F2329;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .recent-time { font-size: 11px; color: #8F959E; margin-top: 2px; }
+        .recent-arrow { color: #C9CDD4; font-size: 14px; margin-left: auto; }
+
+        .bottom-btn {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 24px;
+            height: 50px;
+            background: linear-gradient(135deg, #25B864, #1DA05A);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(37, 184, 100, 0.3);
+            cursor: pointer;
+        }
+        .bottom-btn:active { opacity: 0.9; transform: scale(0.98); }
+        .bottom-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .spacer { height: 80px; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="nav">
+            <span class="back">‹</span>
+            <span class="nav-title">📤 文件导入</span>
+        </div>
+        <div class="content">
+            <div class="kb-selector">
+                <div>
+                    <div class="kb-label">归属知识库（可选）</div>
+                    <div class="kb-value">📚 技术文档</div>
+                </div>
+                <span class="kb-arrow">›</span>
+            </div>
+
+            <div class="dropzone">
+                <div class="dz-icon">📂</div>
+                <div class="dz-title">点击或拖拽文件到此</div>
+                <div class="dz-desc">上传后自动解析入库<br>支持在知识库里快速预览</div>
+                <span class="dz-ext">.html · .htm · .md · .markdown</span>
+            </div>
+
+            <div class="file-list">
+                <div class="file-list-title">
+                    <span>已选 3 个文件</span>
+                    <span class="file-list-clear">清空</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">🌐</span>
+                    <div class="file-info">
+                        <div class="file-name">quick-start.html</div>
+                        <div class="file-meta">HTML · 12KB · 刚刚</div>
+                    </div>
+                    <span class="status status-success">✓ 已上传</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">📝</span>
+                    <div class="file-info">
+                        <div class="file-name">readme.md</div>
+                        <div class="file-meta">Markdown · 3.4KB · 刚刚</div>
+                    </div>
+                    <span class="status status-uploading">⏳ 上传中</span>
+                </div>
+                <div class="file-item">
+                    <span class="file-icon">🌐</span>
+                    <div class="file-info">
+                        <div class="file-name">draft.htm</div>
+                        <div class="file-meta">HTML · 8.1KB · 刚刚</div>
+                    </div>
+                    <span class="status status-error">✗ 解析失败</span>
+                </div>
+            </div>
+
+            <div class="recent-title">🔥 我的上传（最近）</div>
+            <div class="recent-item">
+                <span class="file-icon" style="font-size:22px">🌐</span>
+                <div style="flex:1;min-width:0">
+                    <div class="recent-name">spring-boot-quickstart.html</div>
+                    <div class="recent-time">2 小时前 · 已入库 → 预览 ›</div>
+                </div>
+                <span class="recent-arrow">›</span>
+            </div>
+            <div class="recent-item">
+                <span class="file-icon" style="font-size:22px">📝</span>
+                <div style="flex:1;min-width:0">
+                    <div class="recent-name">vue3-composition-api-notes.md</div>
+                    <div class="recent-time">昨天 · 已入库 → 预览 ›</div>
+                </div>
+                <span class="recent-arrow">›</span>
+            </div>
+
+            <div class="spacer"></div>
+        </div>
+        <div class="bottom-btn">上传全部，解析入库 →</div>
+    </div>
+</body>
+</html>

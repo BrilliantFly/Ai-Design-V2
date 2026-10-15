@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件预览 - UniApp 原型</title>
+    <!-- 引入 marked.js 做真实 MD 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: #F8FAF9;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .phone {
+            width: 375px;
+            min-height: 812px;
+            background: #fff;
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .phone-label {
+            text-align: center;
+            font-size: 13px;
+            color: #8F959E;
+            margin-top: 12px;
+        }
+        .nav {
+            height: 56px;
+            background: #fff;
+            border-bottom: 1px solid #DEE0E3;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .back { font-size: 28px; color: #1F2329; cursor: pointer; }
+        .nav-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1F2329;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-btn {
+            font-size: 20px;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+        .doc-meta {
+            padding: 12px 16px;
+            background: #F8FAF9;
+            display: flex;
+            gap: 16px;
+            border-bottom: 1px solid #DEE0E3;
+            font-size: 12px;
+            color: #646A73;
+            flex-shrink: 0;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* ===== Markdown 样式 ===== */
+        .md-body h1 { font-size: 24px; font-weight: 700; margin: 20px 0 12px; color: #1F2329; border-bottom: 2px solid #25B864; padding-bottom: 8px; }
+        .md-body h2 { font-size: 20px; font-weight: 600; margin: 18px 0 10px; color: #1F2329; }
+        .md-body h3 { font-size: 17px; font-weight: 600; margin: 14px 0 8px; color: #1F2329; }
+        .md-body p  { font-size: 15px; line-height: 1.75; margin: 10px 0; color: #1F2329; }
+        .md-body ul, .md-body ol { margin: 10px 0 10px 24px; }
+        .md-body li { font-size: 15px; line-height: 1.75; color: #1F2329; margin-bottom: 4px; }
+        .md-body code {
+            background: #F1F5F2;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: 'Menlo', monospace;
+            font-size: 13px;
+            color: #E67E22;
+        }
+        .md-body pre {
+            background: #1F2329;
+            color: #E8F8EF;
+            padding: 16px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 14px 0;
+            font-size: 13px;
+        }
+        .md-body pre code { background: transparent; color: inherit; padding: 0; font-size: 13px; }
+        .md-body blockquote {
+            border-left: 4px solid #25B864;
+            padding: 8px 14px;
+            margin: 12px 0;
+            background: #E8F8EF;
+            border-radius: 0 8px 8px 0;
+            color: #646A73;
+            font-size: 14px;
+        }
+        .md-body a { color: #25B864; text-decoration: none; }
+        .md-body a:hover { text-decoration: underline; }
+        .md-body hr { border: none; border-top: 1px solid #DEE0E3; margin: 20px 0; }
+
+        /* ===== HTML iframe ===== */
+        .html-frame {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            background: #fff;
+        }
+
+        .footer-bar {
+            height: 60px;
+            background: #fff;
+            border-top: 1px solid #DEE0E3;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-shrink: 0;
+        }
+        .fb-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-size: 11px;
+            color: #646A73;
+            cursor: pointer;
+            padding: 4px 12px;
+        }
+        .fb-item.liked .fb-icon { color: #F54A45; }
+        .fb-item.favorited .fb-icon { color: #F0A020; }
+        .fb-icon { font-size: 22px; }
+    </style>
+</head>
+<body>
+    <!-- ============ MD 预览 ============ -->
+    <div>
+        <div class="phone">
+            <div class="nav">
+                <span class="back">‹</span>
+                <span class="nav-title">readme.md</span>
+                <span class="nav-btn">✏️</span>
+                <span class="nav-btn">↗</span>
+            </div>
+            <div class="doc-meta">
+                <span>📝 Markdown</span>
+                <span>📅 2026-10-13 上传</span>
+                <span>v1</span>
+            </div>
+            <div class="content md-body" id="mdRender"></div>
+            <div class="footer-bar">
+                <div class="fb-item liked"><span class="fb-icon">❤️</span><span>点赞 12</span></div>
+                <div class="fb-item favorited"><span class="fb-icon">⭐</span><span>收藏 3</span></div>
+                <div class="fb-item"><span class="fb-icon">💬</span><span>评论 5</span></div>
+                <div class="fb-item" style="background:#25B864;color:#fff;padding:8px 20px;border-radius:20px"><span>编辑</span></div>
+            </div>
+        </div>
+        <div class="phone-label">📝 Markdown 预览（marked.js 渲染）</div>
+    </div>
+
+    <!-- ============ HTML iframe 预览 ============ -->
+    <div>
+        <div class="phone">
+            <div class="nav">
+                <span class="back">‹</span>
+                <span class="nav-title">quick-start.html</span>
+                <span class="nav-btn">✏️</span>
+                <span class="nav-btn">↗</span>
+            </div>
+            <div class="doc-meta">
+                <span>🌐 HTML（iframe 渲染）</span>
+                <span>📅 2026-10-13</span>
+            </div>
+            <div class="content" style="padding:0">
+                <iframe class="html-frame" id="htmlFrame"></iframe>
+            </div>
+            <div class="footer-bar">
+                <div class="fb-item"><span class="fb-icon">🤍</span><span>点赞</span></div>
+                <div class="fb-item"><span class="fb-icon">☆</span><span>收藏</span></div>
+                <div class="fb-item"><span class="fb-icon">💬</span><span>评论</span></div>
+                <div class="fb-item" style="background:#25B864;color:#fff;padding:8px 20px;border-radius:20px"><span>编辑</span></div>
+            </div>
+        </div>
+        <div class="phone-label">🌐 HTML 预览（iframe srcdoc / web-view）</div>
+    </div>
+
+    <script>
+        // Markdown 渲染
+        const mdContent = `# 知识库文件导入
+
+## 支持的格式
+
+- \`.html\` / \`.htm\` —— 富文本类型
+- \`.md\` / \`.markdown\` —— Markdown 类型
+
+## 用法
+
+1. **Vue 管理端**: 侧边栏 → 知识管理 → 文件管理
+2. **UniApp**: 首页快捷入口「📤 文件导入」
+
+### 快速示例
+
+\`\`\`bash
+# 上传
+POST /api/knowledge/file/upload
+Content-Type: multipart/form-data
+
+files=quick-start.html&knowledgeBaseId=1&uploadPlatform=uniapp-h5
+\`\`\`
+
+> **提示**: 单个文件 ≤ 5MB，批量上传一次最多 20 个。
+
+---
+
+## 解析规则
+
+| file_ext | 写入 contentType |
+|----------|-----------------|
+| .html/.htm | richtext |
+| .md/.markdown | markdown |
+
+\`\`\`java
+// 后端自动生成 kb_document
+KbDocument doc = new KbDocument();
+doc.setTitle(file.getOriginalName().replaceAll("\\.[^.]+$", ""));
+doc.setContent(file.getFileContent());
+doc.setContentType(file.getFileExt().contains("md") ? "markdown" : "richtext");
+\`\`\`
+`;
+document.getElementById('mdRender').innerHTML = marked.parse(mdContent);
+
+        // HTML iframe srcdoc 渲染
+        const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>快速入门</title>
+<style>
+body { font-family: -apple-system, 'PingFang SC', sans-serif; padding: 16px; color: #1F2329; }
+h1 { color: #25B864; border-bottom: 2px solid #25B864; padding-bottom: 8px; }
+h2 { color: #1F2329; margin-top: 20px; }
+ul { margin: 10px 0 10px 20px; }
+li { margin-bottom: 6px; }
+code { background: #E8F8EF; color: #1DA05A; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+</style></head>
+<body>
+<h1>🚀 快速入门</h1>
+<p>这是一个示例上传的 <strong>HTML 文件</strong>，后端存储原始源码，<strong>Vue 端用 iframe srcdoc</strong> 渲染，<strong>App 端用 web-view</strong> 打开。</p>
+<h2>✨ 核心特性</h2>
+<ul>
+    <li>支持 <code>.html</code> / <code>.htm</code> / <code>.md</code> / <code>.markdown</code></li>
+    <li>上传后自动解析入库成 <code>kb_document</code></li>
+    <li>管理端和移动端都能一键预览</li>
+    <li>单个文件 <strong>≤ 5MB</strong>，批量最多 20 个</li>
+</ul>
+<h2>📋 目录结构</h2>
+<ul>
+    <li><code>kb_uploaded_file</code> —— 新表，存上传元信息</li>
+    <li><code>kb_document</code> —— 复用，存解析后的文档</li>
+    <li><code>./upload/knowledge/{yyyyMMdd}/</code> —— 磁盘存储路径</li>
+</ul>
+</body></html>`;
+        document.getElementById('htmlFrame').srcdoc = htmlContent;
+    </script>
+</body>
+</html>

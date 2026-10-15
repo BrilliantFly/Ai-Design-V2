@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理 - Vue 管理端原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: #F5F7FA;
+            padding: 30px;
+        }
+        .layout {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        /* ===== 侧边栏 ===== */
+        .sidebar {
+            width: 220px;
+            background: #001529;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .logo {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo-icon { font-size: 24px; }
+        .menu { padding: 8px 0; }
+        .menu-group-title {
+            padding: 12px 20px 6px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.65);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .menu-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+        .menu-item.active {
+            color: #fff;
+            background: rgba(37,184,100,0.15);
+            border-left-color: #25B864;
+        }
+        .menu-icon { font-size: 16px; width: 20px; text-align: center; }
+        .menu-sub { padding-left: 38px; font-size: 13px; }
+        .menu-sub.active { color: #25B864; }
+
+        /* ===== 主内容 ===== */
+        .main { flex: 1; background: #F5F7FA; }
+        .breadcrumb {
+            height: 48px;
+            background: #fff;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #DEE0E3;
+            color: #646A73;
+        }
+        .breadcrumb a { color: #646A73; text-decoration: none; }
+        .breadcrumb a:hover { color: #25B864; }
+        .breadcrumb .sep { color: #C9CDD4; }
+        .breadcrumb .current { color: #1F2329; font-weight: 500; }
+
+        .content { padding: 20px; }
+
+        /* 搜索卡片 */
+        .search-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #DEE0E3;
+        }
+        .search-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .form-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-label { font-size: 13px; color: #646A73; }
+        .form-input {
+            padding: 6px 10px;
+            border: 1px solid #DEE0E3;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 180px;
+            outline: none;
+        }
+        .form-input:focus { border-color: #25B864; }
+        .form-select {
+            padding: 6px 10px;
+            border: 1px solid #DEE0E3;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 140px;
+            outline: none;
+            background: #fff;
+        }
+        .btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-primary { background: #25B864; color: #fff; border-color: #25B864; }
+        .btn-primary:hover { background: #1DA05A; border-color: #1DA05A; }
+        .btn-default { background: #fff; color: #646A73; border-color: #DEE0E3; }
+        .btn-default:hover { color: #25B864; border-color: #25B864; }
+
+        /* 表格卡片 */
+        .table-card {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #DEE0E3;
+            overflow: hidden;
+        }
+        .toolbar {
+            padding: 14px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid #DEE0E3;
+        }
+        .dragger {
+            flex: 1;
+            border: 2px dashed #DEE0E3;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dragger:hover { border-color: #25B864; background: #F8FAF9; }
+        .drag-icon { font-size: 28px; }
+        .drag-text { font-size: 13px; color: #646A73; }
+        .drag-text strong { color: #25B864; }
+        .upload-kb-select {
+            padding: 6px 10px;
+            border: 1px solid #DEE0E3;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 180px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead th {
+            background: #FAFAFA;
+            text-align: left;
+            padding: 12px 16px;
+            color: #1F2329;
+            font-weight: 600;
+            border-bottom: 1px solid #DEE0E3;
+        }
+        tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #F0F0F0;
+            color: #1F2329;
+            vertical-align: middle;
+        }
+        tbody tr:hover { background: #FAFAFA; }
+
+        .filename-cell { display: flex; align-items: center; gap: 8px; }
+        .file-icon { font-size: 20px; }
+        .ext-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .ext-html { background: #E8F4FD; color: #1890ff; }
+        .ext-md { background: #E8F8EF; color: #25B864; }
+
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-0 { background: #F1F5F2; color: #646A73; }
+        .status-1 { background: #E8F8EF; color: #25B864; }
+        .status-2 { background: #FFEBEE; color: #F54A45; }
+
+        .kb-link { color: #25B864; cursor: pointer; }
+        .kb-link:hover { text-decoration: underline; }
+        .kb-empty { color: #8F959E; }
+
+        .op-link { color: #25B864; cursor: pointer; margin-right: 10px; font-size: 13px; }
+        .op-link:hover { text-decoration: underline; }
+        .op-link.danger { color: #F54A45; }
+        .op-link.disabled { color: #C9CDD4; cursor: not-allowed; }
+
+        .size { color: #646A73; }
+
+        .pagination {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            border-top: 1px solid #DEE0E3;
+            font-size: 13px;
+            color: #646A73;
+        }
+        .page-btn {
+            min-width: 28px;
+            height: 28px;
+            border: 1px solid #DEE0E3;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .page-btn.active { border-color: #25B864; color: #25B864; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- ===== 侧边栏 ===== -->
+        <aside class="sidebar">
+            <div class="logo"><span class="logo-icon">🚀</span>KnowBoot</div>
+            <nav class="menu">
+                <div class="menu-group-title">工作台</div>
+                <div class="menu-item"><span class="menu-icon">🏠</span>首页</div>
+
+                <div class="menu-group-title">知识管理</div>
+                <div class="menu-item"><span class="menu-icon">📚</span>知识库管理</div>
+                <div class="menu-sub menu-item"><span>知识库列表</span></div>
+                <div class="menu-sub menu-item"><span>目录管理</span></div>
+                <div class="menu-item"><span class="menu-icon">📄</span>文档管理</div>
+                <div class="menu-item"><span class="menu-icon">🏷</span>标签管理</div>
+                <div class="menu-item"><span class="menu-icon">✏️</span>小记管理</div>
+                <div class="menu-item active"><span class="menu-icon">📤</span>文件管理<span style="margin-left:auto;font-size:11px;background:#25B864;padding:1px 6px;border-radius:8px;font-weight:normal">NEW</span></div>
+                <div class="menu-sub menu-item active"><span>文件列表</span></div>
+                <div class="menu-sub menu-item"><span>上传记录</span></div>
+
+                <div class="menu-group-title">系统</div>
+                <div class="menu-item"><span class="menu-icon">👤</span>用户管理</div>
+                <div class="menu-item"><span class="menu-icon">🔐</span>角色管理</div>
+                <div class="menu-item"><span class="menu-icon">📋</span>菜单管理</div>
+            </nav>
+        </aside>
+
+        <!-- ===== 主内容 ===== -->
+        <main class="main">
+            <div class="breadcrumb">
+                <a href="#">知识管理</a>
+                <span class="sep">/</span>
+                <span class="current">文件管理</span>
+            </div>
+            <div class="content">
+                <!-- 搜索 -->
+                <div class="search-card">
+                    <div class="search-row">
+                        <div class="form-item">
+                            <span class="form-label">文件名</span>
+                            <input class="form-input" placeholder="请输入关键字" value="quick" />
+                        </div>
+                        <div class="form-item">
+                            <span class="form-label">知识库</span>
+                            <select class="form-select">
+                                <option>全部</option>
+                                <option>技术文档</option>
+                                <option>产品手册</option>
+                                <option>个人笔记</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <span class="form-label">解析状态</span>
+                            <select class="form-select">
+                                <option>全部</option>
+                                <option>已入库</option>
+                                <option>待解析</option>
+                                <option>失败</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <span class="form-label">类型</span>
+                            <select class="form-select">
+                                <option>全部</option>
+                                <option>HTML</option>
+                                <option>Markdown</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary">🔍 查询</button>
+                        <button class="btn btn-default">↻ 重置</button>
+                    </div>
+                </div>
+
+                <!-- 表格 -->
+                <div class="table-card">
+                    <div class="toolbar">
+                        <div class="dragger">
+                            <span class="drag-icon">📤</span>
+                            <div class="drag-text">
+                                <strong>点击或拖拽文件到此上传</strong><br>
+                                支持 .html / .htm / .md / .markdown，单个 ≤ 5MB，批量最多 20 个
+                            </div>
+                        </div>
+                        <select class="upload-kb-select">
+                            <option>归属知识库（可选）</option>
+                            <option>技术文档</option>
+                            <option>产品手册</option>
+                        </select>
+                        <button class="btn btn-primary" style="padding:6px 18px">📤 批量上传</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:60px">#</th>
+                                <th>文件名</th>
+                                <th style="width:80px">类型</th>
+                                <th style="width:100px">大小</th>
+                                <th style="width:120px">归属知识库</th>
+                                <th style="width:100px">解析状态</th>
+                                <th style="width:160px">上传时间</th>
+                                <th style="width:220px">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><div class="filename-cell"><span class="file-icon">🌐</span>quick-start.html</div></td>
+                                <td><span class="ext-tag ext-html">html</span></td>
+                                <td class="size">12 KB</td>
+                                <td><span class="kb-link">📚 技术文档</span></td>
+                                <td><span class="status-tag status-1">✓ 已入库</span></td>
+                                <td>2026-10-13 14:22</td>
+                                <td>
+                                    <span class="op-link">👁 预览</span>
+                                    <span class="op-link">📖 文档</span>
+                                    <span class="op-link danger">🗑 删除</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><div class="filename-cell"><span class="file-icon">📝</span>readme.md</div></td>
+                                <td><span class="ext-tag ext-md">md</span></td>
+                                <td class="size">3.4 KB</td>
+                                <td><span class="kb-link">📚 技术文档</span></td>
+                                <td><span class="status-tag status-1">✓ 已入库</span></td>
+                                <td>2026-10-13 14:25</td>
+                                <td>
+                                    <span class="op-link">👁 预览</span>
+                                    <span class="op-link">📖 文档</span>
+                                    <span class="op-link danger">🗑 删除</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><div class="filename-cell"><span class="file-icon">📝</span>vue3-notes.markdown</div></td>
+                                <td><span class="ext-tag ext-md">markdown</span></td>
+                                <td class="size">47 KB</td>
+                                <td><span class="kb-empty">— 未分类</span></td>
+                                <td><span class="status-tag status-1">✓ 已入库</span></td>
+                                <td>2026-10-12 09:18</td>
+                                <td>
+                                    <span class="op-link">👁 预览</span>
+                                    <span class="op-link">📖 文档</span>
+                                    <span class="op-link danger">🗑 删除</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><div class="filename-cell"><span class="file-icon">🌐</span>draft.htm</div></td>
+                                <td><span class="ext-tag ext-html">htm</span></td>
+                                <td class="size">8.1 KB</td>
+                                <td><span class="kb-link">📖 产品手册</span></td>
+                                <td><span class="status-tag status-2">⚠ 失败</span></td>
+                                <td>2026-10-11 22:35</td>
+                                <td>
+                                    <span class="op-link">👁 预览</span>
+                                    <span class="op-link">🔄 重新解析</span>
+                                    <span class="op-link danger">🗑 删除</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td><div class="filename-cell"><span class="file-icon">🌐</span>api-spec.html</div></td>
+                                <td><span class="ext-tag ext-html">html</span></td>
+                                <td class="size">28 KB</td>
+                                <td><span class="kb-link">📚 技术文档</span></td>
+                                <td><span class="status-tag status-0">⏳ 待解析</span></td>
+                                <td>2026-10-13 15:01</td>
+                                <td>
+                                    <span class="op-link">🔄 重新解析</span>
+                                    <span class="op-link danger">🗑 删除</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        共 <strong>50</strong> 条
+                        <button class="page-btn">‹</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">4</button>
+                        <button class="page-btn">5</button>
+                        <button class="page-btn">›</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
