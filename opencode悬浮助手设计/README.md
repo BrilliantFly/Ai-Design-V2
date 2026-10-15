@@ -174,7 +174,8 @@ know:
 | [03-Vue悬浮按钮设计.md](./03-Vue悬浮按钮设计.md) | know-vue 悬浮图标、对话抽屉、模型选择、设置页 |
 | [04-uniapp悬浮按钮设计.md](./04-uniapp悬浮按钮设计.md) | know-uniapp 悬浮球、对话弹层、跨端流式降级 |
 | [05-数据流程与交互.md](./05-数据流程与交互.md) | 端到端流程（配置 → 选模型 → 会话 → 流式对话 → 落库） |
-| [app/index.html](./app/index.html) | 悬浮图标 + 对话框静态原型 |
+| [06-模型库配置设计.md](./06-模型库配置设计.md) | 多 provider 接入（OpenAI/OpenRouter/Gemini/Anthropic/Ollama/自定义）、模型库管理、凭证同步到 opencode |
+| [app/index.html](./app/index.html) | 悬浮图标 + 对话框静态原型（含模型库配置原型） |
 
 ---
 
@@ -186,4 +187,6 @@ know:
 4. **小程序流式**：`uni.request` 无通用分块能力 → 小程序端固定走非流式（`POST /session/:id/message` 阻塞返回）。
 5. **安全**：`baseUrl` 需协议白名单 + 内网限制；HTTP Basic 密码用 AES 存储、返回前端时脱敏。
 6. **限流/并发**：单实例 opencode 会话有限，需限制并发会话数与消息频率。
-7. **本轮不做**：多模态（图片/文件上传）、工具调用展示、多轮记忆压缩、成本统计看板。
+7. **自定义 provider config 写入**：自定义 OpenAI 兼容 / 本地 provider 的 `baseURL` 需写入 opencode 的 `~/.config/opencode/opencode.json`；仅后端与 opencode 同机时可自动写，分离部署需导出配置片段人工粘贴（见 [06-模型库配置设计](./06-模型库配置设计.md) §5）。
+8. **付费模型成本**：启用 OpenAI/Anthropic 等付费 provider 后会产生费用，建议模型库默认禁用付费模型、需管理员显式启用，并在对话页标注费用。
+9. **本轮不做**：多模态（图片/文件上传）、工具调用展示、多轮记忆压缩、成本统计看板。

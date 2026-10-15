@@ -123,6 +123,40 @@
   .test-result { font-size: 12px; margin-top: 8px; min-height: 18px; }
   .test-result.ok { color: #52c41a; }
   .test-result.err { color: #ff4d4f; }
+
+  /* ====== 设置弹窗 Tab ====== */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+  .tab { padding: 8px 14px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; }
+  .tab.active { color: #6a5cff; border-bottom-color: #6a5cff; font-weight: 600; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ====== Provider 卡片 ====== */
+  .prov-card { border: 1px solid #eee; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .prov-card .prov-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .prov-card .prov-name { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .prov-card .prov-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .prov-badge.builtin { background: #e6f4ff; color: #0958d9; }
+  .prov-badge.local { background: #f6ffed; color: #389e0d; }
+  .prov-badge.custom { background: #fff7e6; color: #d46b08; }
+  .switch { position: relative; width: 36px; height: 20px; background: #ccc; border-radius: 10px; cursor: pointer; transition: background .2s; }
+  .switch.on { background: #6a5cff; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform .2s; }
+  .switch.on::after { transform: translateX(16px); }
+  .prov-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .prov-actions .btn { padding: 4px 12px; font-size: 12px; }
+  .add-prov { border: 1px dashed #6a5cff; color: #6a5cff; background: transparent; border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; font-size: 13px; }
+  .add-prov:hover { background: #f5f3ff; }
+
+  /* ====== 模型库表格 ====== */
+  .lib-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .lib-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .lib-table th, .lib-table td { padding: 8px 6px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+  .lib-table th { color: #999; font-weight: 500; background: #fafafa; }
+  .tag-free { color: #52c41a; font-size: 11px; }
+  .tag-paid { color: #ff4d4f; font-size: 11px; }
+  .star { cursor: pointer; color: #ccc; }
+  .star.on { color: #faad14; }
 </style>
 </head>
 <body>
@@ -135,13 +169,13 @@
   <div class="card">
     <p><b>方案要点：</b></p>
     <p>1. 后端 <code>know-boot-ai</code> 封装 opencode HTTP API（<code>/session</code>、<code>/event</code>、<code>/api/model</code>）。</p>
-    <p>2. 默认使用 OpenCode Zen 内置免费模型（<code>opencode/space-bunny-free</code> 等）。</p>
+    <p>2. 默认使用 OpenCode Zen 内置免费模型；管理员可在模型库接入 OpenAI、OpenRouter、Gemini、Anthropic、Ollama 等。</p>
     <p>3. 悬浮球可拖动 + 吸附边缘，点击展开对话抽屉。</p>
     <p>4. 流式对话走 SSE（<code>message.part.delta</code> 逐字输出）。</p>
     <p>5. App / 小程序端降级为非流式一次性返回。</p>
   </div>
   <div class="card">
-    <p>原型包含：悬浮球、对话抽屉、模型选择、设置弹窗（管理员）、流式打字机效果、中断生成。</p>
+    <p>原型包含：悬浮球、对话抽屉、模型选择、设置弹窗（管理员，含多 Provider 配置 + 模型库管理）、流式打字机效果、中断生成。</p>
   </div>
 </div>
 
@@ -157,7 +191,7 @@
   <div class="drawer-header">
     <span class="title">AI 助手</span>
     <div style="display:flex;align-items:center;gap:8px">
-      <div class="model-pick" id="modelPick" title="切换免费模型">
+      <div class="model-pick" id="modelPick" title="切换模型">
         <span id="curModelName">Space Bunny (Free)</span>
         <span>▾</span>
       </div>
@@ -174,37 +208,66 @@
   </div>
 </div>
 
-<!-- 设置弹窗 -->
+<!-- 设置弹窗（含 Tab：服务设置 / Provider 配置 / 模型库） -->
 <div class="modal-mask" id="settingModal">
-  <div class="modal">
+  <div class="modal" style="width:560px">
     <h3>AI 助手设置</h3>
-    <div class="form-item">
-      <label>opencode 服务地址</label>
-      <input id="cfgUrl" value="http://127.0.0.1:4096" />
+    <div class="tabs">
+      <div class="tab active" data-tab="service">服务设置</div>
+      <div class="tab" data-tab="provider">Provider 配置</div>
+      <div class="tab" data-tab="library">模型库</div>
     </div>
-    <div class="form-item">
-      <label>Basic 用户名（可选）</label>
-      <input id="cfgUser" placeholder="opencode" />
+
+    <!-- Tab 1: 服务设置 -->
+    <div class="tab-panel active" id="panel-service">
+      <div class="form-item">
+        <label>opencode 服务地址</label>
+        <input id="cfgUrl" value="http://127.0.0.1:4096" />
+      </div>
+      <div class="form-item">
+        <label>Basic 用户名（可选）</label>
+        <input id="cfgUser" placeholder="opencode" />
+      </div>
+      <div class="form-item">
+        <label>Basic 密码（可选）</label>
+        <input id="cfgPwd" type="password" placeholder="******" />
+      </div>
+      <div class="test-result" id="testResult"></div>
+      <div class="modal-footer">
+        <button class="btn btn-default" id="testBtn">测试连通</button>
+        <button class="btn btn-primary" id="saveBtn">保存</button>
+        <button class="btn btn-default" id="cancelBtn">取消</button>
+      </div>
     </div>
-    <div class="form-item">
-      <label>Basic 密码（可选）</label>
-      <input id="cfgPwd" type="password" placeholder="******" />
+
+    <!-- Tab 2: Provider 配置 -->
+    <div class="tab-panel" id="panel-provider">
+      <div style="max-height:360px;overflow-y:auto" id="provList">
+        <!-- Provider 卡片由 JS 渲染 -->
+      </div>
+      <button class="add-prov" id="addProvBtn">+ 添加 Provider（OpenAI / OpenRouter / Gemini / Anthropic / Ollama / 自定义）</button>
+      <div class="modal-footer">
+        <button class="btn btn-default" id="cancelBtn2">关闭</button>
+      </div>
     </div>
-    <div class="form-item">
-      <label>默认免费模型</label>
-      <select id="cfgModel">
-        <option value="opencode/space-bunny-free">Space Bunny (Free)</option>
-        <option value="opencode/big-pickle">Big Pickle (Free)</option>
-        <option value="opencode/longcat-2.5-preview-free">LongCat 2.5 Preview (Free)</option>
-        <option value="opencode/mimo-v2.6-flash-free">MiMo v2.6 Flash (Free)</option>
-        <option value="opencode/ling-3.1-flash-free">Ling 3.1 Flash (Free)</option>
-      </select>
-    </div>
-    <div class="test-result" id="testResult"></div>
-    <div class="modal-footer">
-      <button class="btn btn-default" id="testBtn">测试连通</button>
-      <button class="btn btn-primary" id="saveBtn">保存</button>
-      <button class="btn btn-default" id="cancelBtn">取消</button>
+
+    <!-- Tab 3: 模型库 -->
+    <div class="tab-panel" id="panel-library">
+      <div class="lib-bar">
+        <span style="font-size:12px;color:#999">已启用模型将出现在用户对话下拉中</span>
+        <button class="btn btn-primary" id="refreshLibBtn" style="padding:4px 12px;font-size:12px">↻ 刷新模型库</button>
+      </div>
+      <div style="max-height:340px;overflow-y:auto">
+        <table class="lib-table">
+          <thead><tr>
+            <th>模型</th><th>Provider</th><th>类型</th><th>上下文</th><th>$/M(入/出)</th><th>启用</th><th>推荐</th>
+          </tr></thead>
+          <tbody id="libBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" id="cancelBtn3">关闭</button>
+      </div>
     </div>
   </div>
 </div>
@@ -316,40 +379,137 @@ sendBtn.onclick = () => { if (streaming) { streaming = false; } else { send(); }
 input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
 input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
 
-// ===== 模型选择 =====
+// ===== 模型选择（从模型库 enabled 模型读取，含免费/付费分组） =====
 const modelPick = document.getElementById('modelPick');
 const curModelName = document.getElementById('curModelName');
-const models = [
-  { id: 'opencode/space-bunny-free', name: 'Space Bunny (Free)' },
-  { id: 'opencode/big-pickle', name: 'Big Pickle (Free)' },
-  { id: 'opencode/longcat-2.5-preview-free', name: 'LongCat 2.5 (Free)' },
-  { id: 'opencode/mimo-v2.6-flash-free', name: 'MiMo v2.6 Flash (Free)' },
-  { id: 'opencode/ling-3.1-flash-free', name: 'Ling 3.1 Flash (Free)' }
+const enabledModels = [
+  { ref: 'opencode/space-bunny-free', name: 'Space Bunny (Free)', provider: 'OpenCode Zen', isFree: true },
+  { ref: 'opencode/big-pickle', name: 'Big Pickle (Free)', provider: 'OpenCode Zen', isFree: true },
+  { ref: 'opencode/longcat-2.5-preview-free', name: 'LongCat 2.5 (Free)', provider: 'OpenCode Zen', isFree: true },
+  { ref: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI', isFree: false },
+  { ref: 'openai/gpt-4o-mini', name: 'GPT-4o mini', provider: 'OpenAI', isFree: false },
+  { ref: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google', isFree: true },
+  { ref: 'ollama/llama3.2', name: 'Llama 3.2 (本地)', provider: 'Ollama', isFree: true }
 ];
 modelPick.onclick = () => {
-  const items = models.map(m => m.name);
-  // 简易下拉
-  const idx = prompt('选择免费模型（输入序号 1-' + items.length + '）：\n' + items.map((n,i)=>`${i+1}. ${n}`).join('\n'), '1');
-  if (idx) { const m = models[parseInt(idx)-1]; if (m) curModelName.textContent = m.name; }
+  // 按 provider 分组的简易下拉
+  const groups = {};
+  enabledModels.forEach(m => { (groups[m.provider] = groups[m.provider] || []).push(m); });
+  let menu = '', idx = 0, flat = [];
+  for (const [prov, list] of Object.entries(groups)) {
+    menu += `\n【${prov}】\n`;
+    list.forEach(m => { idx++; menu += `${idx}. ${m.name}${m.isFree ? ' ✅免费' : ' 💰付费'}\n`; flat.push(m); });
+  }
+  const pick = prompt('选择模型（输入序号）：' + menu, '1');
+  if (pick) { const m = flat[parseInt(pick)-1]; if (m) { curModelName.textContent = m.name + (m.isFree ? ' (Free)' : ''); curModelRef = m.ref; } }
 };
+let curModelRef = 'opencode/space-bunny-free';
 
-// ===== 设置弹窗 =====
+// ===== 设置弹窗 Tab 切换 =====
 const settingModal = document.getElementById('settingModal');
 document.getElementById('settingBtn').onclick = () => settingModal.classList.add('open');
-document.getElementById('cancelBtn').onclick = () => settingModal.classList.remove('open');
+['cancelBtn','cancelBtn2','cancelBtn3'].forEach(id => {
+  const el = document.getElementById(id); if (el) el.onclick = () => settingModal.classList.remove('open');
+});
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  };
+});
+
+// ===== 服务设置 Tab =====
 document.getElementById('testBtn').onclick = () => {
   const r = document.getElementById('testResult');
   r.className = 'test-result'; r.textContent = '测试中...';
-  setTimeout(() => {
-    r.className = 'test-result ok';
-    r.textContent = '✓ 连通成功，发现 14 个免费模型';
-  }, 800);
+  setTimeout(() => { r.className = 'test-result ok'; r.textContent = '✓ 连通成功，opencode serve 在线'; }, 800);
 };
-document.getElementById('saveBtn').onclick = () => {
-  const m = document.getElementById('cfgModel');
-  curModelName.textContent = m.options[m.selectedIndex].text;
-  settingModal.classList.remove('open');
+document.getElementById('saveBtn').onclick = () => { settingModal.classList.remove('open'); };
+
+// ===== Provider 配置 Tab =====
+const providers = [
+  { id: 'opencode', name: 'OpenCode Zen', type: 'builtin', enabled: true, hasKey: false, badge: '内置免费' },
+  { id: 'openai', name: 'OpenAI', type: 'builtin', enabled: false, hasKey: false, badge: '内置' },
+  { id: 'openrouter', name: 'OpenRouter', type: 'builtin', enabled: false, hasKey: false, badge: '内置' },
+  { id: 'google', name: 'Google Gemini', type: 'builtin', enabled: false, hasKey: false, badge: '内置' },
+  { id: 'anthropic', name: 'Anthropic', type: 'builtin', enabled: false, hasKey: false, badge: '内置' },
+  { id: 'ollama', name: 'Ollama (本地)', type: 'local', enabled: false, hasKey: false, badge: '本地', baseUrl: 'http://127.0.0.1:11434' }
+];
+function renderProviders() {
+  const list = document.getElementById('provList');
+  list.innerHTML = providers.map((p, i) => `
+    <div class="prov-card">
+      <div class="prov-head">
+        <span class="prov-name">${p.name}
+          <span class="prov-badge ${p.type}">${p.badge}</span>
+          ${p.hasKey ? '<span style="color:#52c41a;font-size:12px">✓ 已配Key</span>' : ''}
+        </span>
+        <div class="switch ${p.enabled ? 'on' : ''}" data-idx="${i}"></div>
+      </div>
+      ${p.type === 'local' ? `<div class="form-item" style="margin:0 0 8px"><input value="${p.baseUrl||''}" placeholder="baseURL" style="font-size:13px"></div>` : ''}
+      ${p.type === 'builtin' && p.id !== 'opencode' ? `<div class="form-item" style="margin:0 0 8px"><input type="password" placeholder="API Key (sk-...)" style="font-size:13px"></div>` : ''}
+      <div class="prov-actions">
+        <button class="btn btn-default" onclick="testProvider(${i})">测试连通</button>
+        <button class="btn btn-primary" onclick="syncProvider(${i})">同步到 opencode</button>
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('.switch').forEach(s => {
+    s.onclick = () => { const i = +s.dataset.idx; providers[i].enabled = !providers[i].enabled; renderProviders(); };
+  });
+}
+window.testProvider = (i) => {
+  const p = providers[i];
+  alert(`测试 ${p.name} 连通性...\n真实环境调 GET /provider 验证 connected 含 ${p.id}`);
 };
+window.syncProvider = (i) => {
+  const p = providers[i]; p.hasKey = true;
+  alert(`已将 ${p.name} 凭证同步到 opencode（PUT /auth/${p.id}）`);
+  renderProviders();
+};
+document.getElementById('addProvBtn').onclick = () => {
+  const name = prompt('输入自定义 Provider 名称：', 'My LLM');
+  if (!name) return;
+  providers.push({ id: 'custom-' + Date.now(), name, type: 'custom', enabled: true, hasKey: false, badge: '自定义' });
+  renderProviders();
+};
+renderProviders();
+
+// ===== 模型库 Tab =====
+const library = [
+  { ref: 'opencode/space-bunny-free', name: 'Space Bunny', provider: 'opencode', isFree: true, ctx: '128K', cin: 0, cout: 0, enabled: true, rec: true },
+  { ref: 'opencode/big-pickle', name: 'Big Pickle', provider: 'opencode', isFree: true, ctx: '128K', cin: 0, cout: 0, enabled: true, rec: false },
+  { ref: 'opencode/longcat-2.5-preview-free', name: 'LongCat 2.5', provider: 'opencode', isFree: true, ctx: '128K', cin: 0, cout: 0, enabled: true, rec: false },
+  { ref: 'openai/gpt-4o', name: 'GPT-4o', provider: 'openai', isFree: false, ctx: '128K', cin: 2.5, cout: 10, enabled: false, rec: false },
+  { ref: 'openai/gpt-4o-mini', name: 'GPT-4o mini', provider: 'openai', isFree: false, ctx: '128K', cin: 0.15, cout: 0.6, enabled: false, rec: false },
+  { ref: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', isFree: true, ctx: '1M', cin: 0, cout: 0, enabled: true, rec: false },
+  { ref: 'ollama/llama3.2', name: 'Llama 3.2', provider: 'ollama', isFree: true, ctx: '128K', cin: 0, cout: 0, enabled: false, rec: false }
+];
+function renderLibrary() {
+  document.getElementById('libBody').innerHTML = library.map((m, i) => `
+    <tr>
+      <td>${m.name}<br><span style="color:#999;font-size:11px">${m.ref}</span></td>
+      <td>${m.provider}</td>
+      <td>${m.isFree ? '<span class="tag-free">免费</span>' : '<span class="tag-paid">付费</span>'}</td>
+      <td>${m.ctx}</td>
+      <td>${m.cin}/${m.cout}</td>
+      <td><div class="switch ${m.enabled?'on':''}" data-lib="${i}" data-field="enabled"></div></td>
+      <td><span class="star ${m.rec?'on':''}" data-lib="${i}">★</span></td>
+    </tr>`).join('');
+  document.querySelectorAll('[data-lib]').forEach(el => {
+    el.onclick = () => {
+      const i = +el.dataset.lib, f = el.dataset.field;
+      if (f === 'enabled') library[i].enabled = !library[i].enabled;
+      else library[i].rec = !library[i].rec;
+      renderLibrary();
+    };
+  });
+}
+document.getElementById('refreshLibBtn').onclick = () => {
+  alert('从 opencode GET /api/model 全量拉取模型清单...\n（演示：列表保持不变）');
+};
+renderLibrary();
 
 // 初始欢迎消息
 window.addEventListener('load', () => {
