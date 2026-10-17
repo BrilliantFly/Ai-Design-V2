@@ -60,9 +60,11 @@ VALUES (20, 0, '知识管理', '/knowledge', NULL, 'knowledge:view', 'book', 1, 
 ON DUPLICATE KEY UPDATE `menu_name` = VALUES(`menu_name`);
 
 -- 2.2 菜单: 文件管理 (新增, id=2005 顺延现有 2001~2004)
+-- 注意: 知识管理下其余子菜单均无 icon，这里也不要设置 icon，
+--       否则侧边栏该项会因多渲染一个图标而比同级“缩进/右移”几个字
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `path`, `component`, `perms`, `icon`, `menu_type`, `sort`, `status`, `create_by`, `create_time`)
-VALUES (2005, 20, '文件管理', '/knowledge/file', 'knowledge/file', 'knowledge:file:view', 'upload', 2, 5, 1, 'admin', NOW())
-ON DUPLICATE KEY UPDATE `menu_name` = VALUES(`menu_name`);
+VALUES (2005, 20, '文件管理', '/knowledge/file', 'knowledge/file', 'knowledge:file:view', NULL, 2, 5, 1, 'admin', NOW())
+ON DUPLICATE KEY UPDATE `menu_name` = VALUES(`menu_name`), `icon` = VALUES(`icon`);
 
 -- 2.3 按钮权限 (3 个, 20051 / 20052 / 20053)
 INSERT INTO `sys_menu` (`id`, `parent_id`, `menu_name`, `path`, `component`, `perms`, `icon`, `menu_type`, `sort`, `status`, `create_by`, `create_time`)
