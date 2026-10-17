@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>know-uniapp 首页设计 · 4 方案对比</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif;background:#0f1123;color:#eef0ff;min-height:100vh;padding:48px 24px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:26px;font-weight:800;letter-spacing:1px}
+  .sub{margin-top:8px;font-size:13px;color:#9aa0c3}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;max-width:1100px;width:100%;margin-top:36px}
+  .card{display:block;text-decoration:none;border-radius:18px;padding:22px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);transition:.25s;color:#eef0ff}
+  .card:hover{transform:translateY(-4px);border-color:rgba(124,124,255,.6);background:rgba(124,124,255,.08)}
+  .num{font-size:12px;font-weight:700;color:#7c7cff;letter-spacing:2px}
+  .t{font-size:18px;font-weight:700;margin-top:8px}
+  .d{font-size:12px;color:#9aa0c3;margin-top:6px;line-height:1.6}
+  .tag{display:inline-block;margin-top:12px;font-size:10px;padding:3px 10px;border-radius:99px;background:rgba(124,124,255,.15);color:#a5a7ff}
+</style>
+</head>
+<body>
+<h1>know-uniapp 首页全新设计</h1>
+<div class="sub">同一套内容元素 · 四种完全不同的布局骨架</div>
+<div class="grid">
+  <a class="card" href="./design-1.html"><div class="num">DESIGN 01</div><div class="t">数据仪表盘风</div><div class="d">环形进度 + 迷你趋势图 + KPI 条卡，像 Notion / 飞书仪表盘，数据感最强</div><span class="tag">数据驱动</span></a>
+  <a class="card" href="./design-2.html"><div class="num">DESIGN 02</div><div class="t">卡片流极简风</div><div class="d">今日 3 件事超大卡置顶，其余内容收进 Tab 分区（纯 CSS 可点切换），首屏极简</div><span class="tag">极简聚焦</span></a>
+  <a class="card" href="./design-3.html"><div class="num">DESIGN 03</div><div class="t">沉浸式时间轴</div><div class="d">时间轴串联今日任务 / 告警 / 公告，快捷功能收进「+」浮层（纯 CSS 展开），信息流冲击感</div><span class="tag">叙事感</span></a>
+  <a class="card" href="./design-4.html"><div class="num">DESIGN 04</div><div class="t">深色科技风</div><div class="d">深色底 + 霓虹发光数据卡 + 系统状态条，突出设备监控运维感</div><span class="tag">赛博运维</span></a>
+</div>
+</body>
+</html>

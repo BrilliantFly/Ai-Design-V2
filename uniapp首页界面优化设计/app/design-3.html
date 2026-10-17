@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=375, initial-scale=1" />
+<title>know-uniapp 首页 · 设计3 沉浸式时间轴</title>
+<style>
+  :root{
+    --cp:#5b5bd6;--cp-s:#f0efff;--cm:#1890ff;
+    --ok:#22b573;--ok-s:#e8f5ee;--dg:#e85a5a;--dg-s:#fef0f0;
+    --wr:#f59e0b;--wr-s:#fff8ed;
+    --bg:#f4f5fb;--card:#ffffff;--sub:#f7f8fc;
+    --tx:#0b0b12;--tx2:#6f7180;--tx3:#a5a7b5;--bd:#ececf2;
+    --ra:14px;--rs:10px;
+    --sh-s:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+    --sh-m:0 8px 24px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#e4e6f2;min-height:100vh;display:flex;justify-content:center;padding:32px 16px;color:var(--tx);font-size:14px}
+
+  /* 手机壳 */
+  .pf{width:375px;background:var(--bg);border-radius:40px;box-shadow:0 40px 100px rgba(30,30,80,.22),0 0 0 10px #1a1a2e,0 0 0 12px #2a2a40;overflow:hidden;position:relative;padding-bottom:108px}
+  .nt{width:120px;height:28px;background:#1a1a2e;border-radius:0 0 18px 18px;margin:0 auto}
+  .sb{display:flex;justify-content:space-between;padding:6px 20px 0;font-size:12px;font-weight:600;color:var(--tx3);position:absolute;top:0;left:0;right:0;z-index:5}
+
+  /* 顶栏 */
+  .topbar{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);padding:10px 16px 12px;margin-top:28px}
+  .tb-row{display:flex;align-items:center;gap:10px}
+  .tb-ava{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--cp),var(--cm));color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tb-greet{flex:1;min-width:0}
+  .tb-name{font-size:15px;font-weight:700;color:var(--tx);line-height:1.2}
+  .tb-sub{font-size:10px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-act{display:flex;gap:6px;flex-shrink:0}
+  .tb-btn{width:34px;height:34px;border-radius:10px;background:var(--sub);display:flex;align-items:center;justify-content:center;position:relative;color:var(--tx2);cursor:pointer}
+  .tb-btn svg{width:16px;height:16px}
+  .tb-badge{position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 4px;border-radius:99px;background:var(--dg);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+
+  /* 「+」按钮 + 快捷功能浮层（纯 CSS checkbox hack） */
+  #qa{position:absolute;opacity:0;pointer-events:none}
+  .qa-btn{background:linear-gradient(135deg,var(--cp),var(--cm));color:#fff;box-shadow:0 4px 12px rgba(91,91,214,.3);transition:transform .25s ease}
+  .qa-btn svg{width:18px;height:18px}
+  #qa:checked ~ .tb-row .qa-btn{transform:rotate(45deg)}
+  .qa-mask{position:absolute;top:100%;left:0;right:0;height:1400px;background:rgba(15,18,40,.35);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:11;cursor:pointer}
+  #qa:checked ~ .qa-mask{opacity:1;pointer-events:auto}
+  .qa-panel{position:absolute;top:calc(100% + 8px);left:12px;right:12px;background:var(--card);border-radius:18px;box-shadow:0 16px 40px rgba(15,23,42,.16);padding:16px 10px 12px;z-index:12;opacity:0;transform:translateY(-10px) scale(.97);pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+  #qa:checked ~ .qa-panel{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .qa-title{font-size:11px;font-weight:700;color:var(--tx3);padding:0 8px 10px;letter-spacing:1px}
+  .qa-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px 4px}
+  .qi{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+  .qi-ic{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:var(--sh-s)}
+  .qi-lb{font-size:10px;color:var(--tx2)}
+  .g1{background:#eef0ff}.g2{background:#e6f4ff}.g3{background:#e8f5ee}.g4{background:#fef0f0}.g5{background:#fff8ed}
+  .g6{background:#f0f5ff}.g7{background:#fdf0f7}.g8{background:#f0efff}.g9{background:#eef9f0}.gm{background:#f4f5fb}
+
+  /* 搜索行 */
+  .search{margin-top:10px;display:flex;gap:8px;align-items:center}
+  .sb2{flex:1;height:38px;background:var(--card);border-radius:var(--rs);display:flex;align-items:center;padding:0 12px;gap:8px;box-shadow:var(--sh-s);border:1px solid var(--bd)}
+  .sb2 svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0}
+  .sb2 span{font-size:12px;color:var(--tx3)}
+  .sc2{width:38px;height:38px;border-radius:var(--rs);background:var(--cp-s);display:flex;align-items:center;justify-content:center;color:var(--cp);flex-shrink:0}
+  .sc2 svg{width:18px;height:18px}
+
+  .wrap{padding:14px 14px 0}
+
+  /* 区块标题 */
+  .sec-h{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 10px}
+  .sec-t{font-size:14px;font-weight:700;color:var(--tx)}
+  .sec-t::before{content:'';display:inline-block;width:3px;height:14px;background:var(--cp);border-radius:2px;margin-right:8px;vertical-align:-2px}
+  .sec-m{font-size:11px;color:var(--tx3)}
+
+  /* ===== 今日时间轴（核心） ===== */
+  .tl{position:relative;margin-top:2px}
+  .tl::before{content:'';position:absolute;left:53px;top:14px;bottom:14px;width:2px;border-radius:2px;background:linear-gradient(180deg,#c9c9f2,#e8e8f4)}
+  .tl-item{display:grid;grid-template-columns:42px 22px 1fr;padding:7px 0}
+  .tl-time{font-size:11px;font-weight:700;color:var(--tx2);text-align:right;padding-top:15px;font-variant-numeric:tabular-nums}
+  .tl-axis{display:flex;justify-content:center;padding-top:11px}
+  .tl-dot{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--cp);box-shadow:0 0 0 3px var(--bg)}
+  .tl-dot.big{width:17px;height:17px;border-width:4px;border-color:var(--cp);margin-top:-2px;box-shadow:0 0 0 3px var(--bg),0 0 0 5px rgba(91,91,214,.15)}
+  .tl-dot.red{border-color:var(--dg);box-shadow:0 0 0 3px var(--bg),0 0 0 5px rgba(232,90,90,.12)}
+  .tl-dot.amber{border-color:var(--wr);box-shadow:0 0 0 3px var(--bg)}
+  .tl-dot.green{border-color:var(--ok);box-shadow:0 0 0 3px var(--bg)}
+  .tl-card{margin-left:10px;background:var(--card);border-radius:var(--ra);box-shadow:var(--sh-s);border:1px solid var(--bd);padding:12px 14px}
+
+  /* 待办大节点卡 */
+  .todo-hd{display:flex;align-items:center;gap:8px}
+  .todo-ic{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--cp),var(--cm));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .todo-t{flex:1;font-size:13px;font-weight:700}
+  .todo-chip{font-size:10px;font-weight:700;color:var(--cp);background:var(--cp-s);border-radius:99px;padding:3px 8px}
+  .tl-bar{height:6px;border-radius:3px;background:var(--sub);margin-top:10px;overflow:hidden}
+  .tl-bar-in{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cp),var(--cm))}
+  .tl-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-top:5px}
+  .tl-meta b{color:var(--cp)}
+  .task{margin-top:8px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx);padding:7px 9px;border-radius:8px;background:var(--sub)}
+  .task .ck{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--tx3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+  .task.done{color:var(--tx3);text-decoration:line-through}
+  .task.done .ck{background:var(--ok);border-color:var(--ok)}
+  .task .tm{margin-left:auto;font-size:10px;color:var(--tx3);text-decoration:none;flex-shrink:0}
+
+  /* 告警卡 */
+  .card-dg{background:linear-gradient(135deg,#fff5f5,#fef0f0);border-color:#fadcdc}
+  .dg-hd{display:flex;align-items:center;gap:8px}
+  .dg-ic{width:26px;height:26px;border-radius:8px;background:var(--dg);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .dg-t{flex:1;font-size:13px;font-weight:700;color:#c0392b}
+  .dg-badge{font-size:10px;font-weight:700;color:#fff;background:var(--dg);border-radius:99px;padding:3px 8px}
+  .dg-row{margin-top:8px;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--tx);background:rgba(255,255,255,.75);border-radius:8px;padding:7px 9px}
+  .dg-row .lv{margin-left:auto;font-size:9px;font-weight:700;color:var(--dg);background:#fff;border:1px solid #f5c6c6;border-radius:99px;padding:2px 7px;flex-shrink:0}
+  .dg-row .tm{font-size:10px;color:var(--tx3);flex-shrink:0}
+
+  /* 公告卡 */
+  .card-wr{background:linear-gradient(135deg,#fffbf2,#fff8ed);border-color:#f5e6c8}
+  .wr-row{display:flex;align-items:center;gap:10px}
+  .wr-ic{width:30px;height:30px;border-radius:9px;background:var(--wr);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .wr-t{flex:1;font-size:12px;color:var(--tx);line-height:1.5}
+  .wr-t b{font-weight:700}
+  .wr-ar{font-size:10px;color:var(--wr);font-weight:700;flex-shrink:0}
+
+  /* 设备卡 */
+  .card-ok{background:linear-gradient(135deg,#f3faf6,#e8f5ee);border-color:#cdeadb}
+  .ok-hd{display:flex;align-items:center;gap:8px}
+  .ok-ic{width:26px;height:26px;border-radius:8px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .ok-t{flex:1;font-size:13px;font-weight:700;color:#15803d}
+  .ok-link{font-size:10px;color:var(--ok);font-weight:700}
+  .ok-stats{display:flex;margin-top:10px}
+  .ok-stat{flex:1;text-align:center;padding:8px 0;background:rgba(255,255,255,.7);border-radius:10px}
+  .ok-stat + .ok-stat{margin-left:8px}
+  .ok-num{font-size:20px;font-weight:800;color:var(--ok);line-height:1}
+  .ok-num small{font-size:11px;font-weight:600;margin-left:2px}
+  .ok-lb{font-size:10px;color:var(--tx2);margin-top:3px}
+
+  /* 精选推荐 Banner */
+  .banners{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+  .banners::-webkit-scrollbar{display:none}
+  .bn-item{min-width:225px;height:96px;border-radius:14px;padding:13px 16px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--sh-m);flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between}
+  .bn-item::after{content:attr(data-art);position:absolute;right:8px;bottom:-12px;font-size:56px;opacity:.22}
+  .bn-item.b1{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+  .bn-item.b2{background:linear-gradient(135deg,#5b5bd6,#1890ff)}
+  .bn-item.b3{background:linear-gradient(135deg,#f59e0b,#ef6c4d)}
+  .bn-tag{align-self:flex-start;font-size:9px;font-weight:700;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 8px}
+  .bn-t{font-size:14px;font-weight:700}
+  .bn-d{font-size:10px;color:rgba(255,255,255,.85);margin-top:3px}
+
+  /* 热门推荐 */
+  .rec{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .rc{background:var(--card);border-radius:var(--ra);overflow:hidden;box-shadow:var(--sh-s);border:1px solid var(--bd)}
+  .rc-thumb{height:64px;display:flex;align-items:center;justify-content:center;font-size:26px;position:relative}
+  .rc-thumb.t1{background:linear-gradient(135deg,#eef0ff,#e0e7ff)}
+  .rc-thumb.t2{background:linear-gradient(135deg,#e6f4ff,#d6ecff)}
+  .rc-thumb.t3{background:linear-gradient(135deg,#e8f5ee,#d9f0e3)}
+  .rc-thumb.t4{background:linear-gradient(135deg,#fff7e6,#ffefd6)}
+  .rc-tag{position:absolute;top:6px;left:6px;font-size:8px;font-weight:700;color:#fff;border-radius:99px;padding:2px 7px}
+  .rc-thumb.t1 .rc-tag{background:var(--cm)}
+  .rc-thumb.t2 .rc-tag{background:var(--cp)}
+  .rc-thumb.t3 .rc-tag{background:var(--ok)}
+  .rc-thumb.t4 .rc-tag{background:var(--wr)}
+  .rc-bd{padding:8px 10px 10px}
+  .rc-t{font-size:12px;font-weight:700}
+  .rc-d{font-size:10px;color:var(--tx2);margin-top:3px;line-height:1.4}
+
+  /* 常用工具 */
+  .tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tc{background:var(--card);border-radius:var(--ra);padding:12px;box-shadow:var(--sh-s);border:1px solid var(--bd)}
+  .tc-hd{display:flex;align-items:center;gap:7px}
+  .tc-ic{width:26px;height:26px;border-radius:8px;background:var(--cp-s);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .tc-t{flex:1;font-size:12px;font-weight:700}
+  .tc-tag{font-size:8px;font-weight:700;color:var(--dg);background:var(--dg-s);border-radius:99px;padding:2px 6px}
+  .tc-d{font-size:10px;color:var(--tx2);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tc-bar{height:5px;border-radius:3px;background:var(--sub);margin-top:9px;overflow:hidden}
+  .tc-bar-in{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cp),var(--cm))}
+  .tc-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);margin-top:5px}
+  .tc-meta span:last-child{font-weight:700;color:var(--tx2)}
+
+  /* 便捷工具 */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh-s);font-size:11px;color:var(--tx)}
+  .chip-dot{width:8px;height:8px;border-radius:50%}
+
+  /* 底部导航 */
+  .bn{position:absolute;left:0;right:0;bottom:14px;padding:0 24px}
+  .bns{display:flex;border-radius:18px;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6);box-shadow:0 8px 24px rgba(15,23,42,.1);padding:6px 0 8px}
+  .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:8px;color:var(--tx3)}
+  .ni.a{color:var(--cp)}
+  .ni svg{width:18px;height:18px}
+  .bottom-gap{height:16px}
+</style>
+</head>
+<body>
+<div class="pf">
+  <div class="nt"></div>
+  <div class="sb"><span>9:41</span><span>📶🔋</span></div>
+
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <input type="checkbox" id="qa" />
+    <div class="tb-row">
+      <div class="tb-ava">张</div>
+      <div class="tb-greet">
+        <div class="tb-name">早上好，张三 ☀️</div>
+        <div class="tb-sub">今天 3 项待办 · 2 条告警待处理</div>
+      </div>
+      <div class="tb-act">
+        <div class="tb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div class="tb-badge">3</div></div>
+        <label class="tb-btn qa-btn" for="qa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></label>
+      </div>
+    </div>
+    <div class="search">
+      <div class="sb2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>搜索功能、设备、文档...</span></div>
+      <div class="sc2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="4" y1="12" x2="20" y2="12"/></svg></div>
+    </div>
+
+    <!-- 快捷功能浮层（点「+」展开 / 点遮罩收起） -->
+    <label class="qa-mask" for="qa"></label>
+    <div class="qa-panel">
+      <div class="qa-title">快捷功能</div>
+      <div class="qa-grid">
+        <div class="qi"><div class="qi-ic g1">📹</div><div class="qi-lb">智能监控</div></div>
+        <div class="qi"><div class="qi-ic g2">📅</div><div class="qi-lb">日程计划</div></div>
+        <div class="qi"><div class="qi-ic g3">🎯</div><div class="qi-lb">习惯打卡</div></div>
+        <div class="qi"><div class="qi-ic g4">🔔</div><div class="qi-lb">告警中心</div></div>
+        <div class="qi"><div class="qi-ic g5">👥</div><div class="qi-lb">客户管理</div></div>
+        <div class="qi"><div class="qi-ic g6">📊</div><div class="qi-lb">数据分析</div></div>
+        <div class="qi"><div class="qi-ic g7">💳</div><div class="qi-lb">财务管理</div></div>
+        <div class="qi"><div class="qi-ic g8">📋</div><div class="qi-lb">项目管理</div></div>
+        <div class="qi"><div class="qi-ic g9">📄</div><div class="qi-lb">文档管理</div></div>
+        <div class="qi"><div class="qi-ic gm">⋯</div><div class="qi-lb">更多</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- ===== 今日时间轴 ===== -->
+    <div class="sec-h" style="margin-top:2px"><div class="sec-t">今日时间轴</div><div class="sec-m">10月15日 · 周三</div></div>
+    <div class="tl">
+
+      <!-- 09:00 待办（大节点） -->
+      <div class="tl-item">
+        <div class="tl-time">09:00</div>
+        <div class="tl-axis"><div class="tl-dot big"></div></div>
+        <div class="tl-card">
+          <div class="todo-hd"><div class="todo-ic">✅</div><div class="todo-t">今日待办</div><div class="todo-chip">3 / 5</div></div>
+          <div class="tl-bar"><div class="tl-bar-in" style="width:40%"></div></div>
+          <div class="tl-meta"><span>完成率</span><b>40%</b></div>
+          <div class="task done"><div class="ck">✓</div>晨会纪要整理与分发<span class="tm">09:40</span></div>
+          <div class="task"><div class="ck"></div>客户回访 · 李总<span class="tm">14:00</span></div>
+          <div class="task"><div class="ck"></div>A 区设备巡检报告<span class="tm">17:00</span></div>
+        </div>
+      </div>
+
+      <!-- 10:30 告警（红色节点） -->
+      <div class="tl-item">
+        <div class="tl-time">10:30</div>
+        <div class="tl-axis"><div class="tl-dot red"></div></div>
+        <div class="tl-card card-dg">
+          <div class="dg-hd"><div class="dg-ic">🔔</div><div class="dg-t">待处理告警</div><div class="dg-badge">2 条</div></div>
+          <div class="dg-row">⚠️ 摄像头离线 · A区-03<span class="tm">10:12</span><span class="lv">紧急</span></div>
+          <div class="dg-row">🌡️ 机房温度异常 · 32°C<span class="tm">10:28</span><span class="lv">一般</span></div>
+        </div>
+      </div>
+
+      <!-- 11:00 公告 -->
+      <div class="tl-item">
+        <div class="tl-time">11:00</div>
+        <div class="tl-axis"><div class="tl-dot amber"></div></div>
+        <div class="tl-card card-wr">
+          <div class="wr-row">
+            <div class="wr-ic">📢</div>
+            <div class="wr-t"><b>系统 v2.4 已发布</b>，新增甘特图与批量操作</div>
+            <div class="wr-ar">查看 →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 13:00 设备（绿色节点） -->
+      <div class="tl-item">
+        <div class="tl-time">13:00</div>
+        <div class="tl-axis"><div class="tl-dot green"></div></div>
+        <div class="tl-card card-ok">
+          <div class="ok-hd"><div class="ok-ic">🛡️</div><div class="ok-t">设备与客户概览</div><div class="ok-link">详情 →</div></div>
+          <div class="ok-stats">
+            <div class="ok-stat"><div class="ok-num">8<small>台</small></div><div class="ok-lb">在线设备</div></div>
+            <div class="ok-stat"><div class="ok-num">12<small>位</small></div><div class="ok-lb">跟进客户</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 精选推荐 Banner -->
+    <div class="sec-h"><div class="sec-t">精选推荐</div><div class="sec-m">全部 →</div></div>
+    <div class="banners">
+      <div class="bn-item b1" data-art="🏆"><span class="bn-tag">热门</span><div><div class="bn-t">AI 智能监控升级</div><div class="bn-d">实时分析 · 异常告警 · 7×24h 守护</div></div></div>
+      <div class="bn-item b2" data-art="📋"><span class="bn-tag">新功能</span><div><div class="bn-t">计划管理 3.0 上线</div><div class="bn-d">甘特图 · 日程 · 打卡 · 目标追踪</div></div></div>
+      <div class="bn-item b3" data-art="📊"><span class="bn-tag">工具</span><div><div class="bn-t">数据分析工具上新</div><div class="bn-d">经营看板 · 报表导出 · 智能分析</div></div></div>
+    </div>
+
+    <!-- 热门推荐 -->
+    <div class="sec-h"><div class="sec-t">热门推荐</div><div class="sec-m">查看全部</div></div>
+    <div class="rec">
+      <div class="rc"><div class="rc-thumb t1">📹<span class="rc-tag">设备</span></div><div class="rc-bd"><div class="rc-t">智能监控</div><div class="rc-d">实时掌握设备状态与画面</div></div></div>
+      <div class="rc"><div class="rc-thumb t2">📅<span class="rc-tag">计划</span></div><div class="rc-bd"><div class="rc-t">计划管理升级</div><div class="rc-d">高效安排每日任务节奏</div></div></div>
+      <div class="rc"><div class="rc-thumb t3">🎯<span class="rc-tag">习惯</span></div><div class="rc-bd"><div class="rc-t">习惯打卡挑战</div><div class="rc-d">持续记录并点亮里程碑</div></div></div>
+      <div class="rc"><div class="rc-thumb t4">👥<span class="rc-tag">推荐</span></div><div class="rc-bd"><div class="rc-t">客户管理实践</div><div class="rc-d">智能跟进提醒与客户维护</div></div></div>
+    </div>
+
+    <!-- 常用工具 -->
+    <div class="sec-h"><div class="sec-t">常用工具</div><div class="sec-m">更多 →</div></div>
+    <div class="tools">
+      <div class="tc"><div class="tc-hd"><div class="tc-ic">📋</div><div class="tc-t">甘特图</div><div class="tc-tag">工具</div></div><div class="tc-d">项目计划与进度追踪</div><div class="tc-bar"><div class="tc-bar-in" style="width:72%"></div></div><div class="tc-meta"><span>完成率</span><span>72%</span></div></div>
+      <div class="tc"><div class="tc-hd"><div class="tc-ic">🔔</div><div class="tc-t">告警中心</div><div class="tc-tag">NEW</div></div><div class="tc-d">异常事件统一追踪与处理</div><div class="tc-bar"><div class="tc-bar-in" style="width:35%"></div></div><div class="tc-meta"><span>未处理</span><span>2 / 6</span></div></div>
+      <div class="tc"><div class="tc-hd"><div class="tc-ic">📊</div><div class="tc-t">经营报表</div></div><div class="tc-d">数据驱动的决策洞察</div><div class="tc-bar"><div class="tc-bar-in" style="width:88%"></div></div><div class="tc-meta"><span>本月</span><span>88%</span></div></div>
+      <div class="tc"><div class="tc-hd"><div class="tc-ic">✅</div><div class="tc-t">今日待办</div></div><div class="tc-d">高效安排每日任务节奏</div><div class="tc-bar"><div class="tc-bar-in" style="width:40%"></div></div><div class="tc-meta"><span>进度</span><span>2 / 5</span></div></div>
+    </div>
+
+    <!-- 便捷工具 -->
+    <div class="sec-h"><div class="sec-t">便捷工具</div><div class="sec-m">更多 →</div></div>
+    <div class="chips">
+      <div class="chip"><div class="chip-dot" style="background:var(--ok)"></div>今天 · 周三</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--dg)"></div>3 项待办</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--cp)"></div>8 台在线</div>
+      <div class="chip"><div class="chip-dot" style="background:var(--wr)"></div>2 条跟进</div>
+      <div class="chip"><div class="chip-dot" style="background:#64748b"></div>1 条公告</div>
+    </div>
+
+    <div class="bottom-gap"></div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bn">
+    <div class="bns">
+      <div class="ni a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>首页</span></div>
+      <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>工作台</span></div>
+      <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>新建</span></div>
+      <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><span>知识库</span></div>
+      <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>我的</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
